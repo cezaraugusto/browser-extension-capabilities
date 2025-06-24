@@ -32,12 +32,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cezaraugusto/browser-extension-contexts.git"
+    "url": "git+https://github.com/cezaraugusto/browser-extension-capabilities.git"
   },
   "bugs": {
-    "url": "https://github.com/cezaraugusto/browser-extension-contexts/issues"
+    "url": "https://github.com/cezaraugusto/browser-extension-capabilities/issues"
   },
-  "homepage": "https://github.com/cezaraugusto/browser-extension-contexts#readme",
+  "homepage": "https://github.com/cezaraugusto/browser-extension-capabilities#readme",
   "engines": {
     "node": ">=14.0.0"
   },

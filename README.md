@@ -2,8 +2,8 @@
 [npm-version-url]: https://www.npmjs.com/package/browser-extension-capabilities
 [npm-downloads-image]: https://img.shields.io/npm/dm/browser-extension-capabilities.svg?color=0971fe
 [npm-downloads-url]: https://www.npmjs.com/package/browser-extension-capabilities
-[action-image]: https://github.com/cezaraugusto/browser-extension-contexts/actions/workflows/ci.yml/badge.svg?branch=main
-[action-url]: https://github.com/cezaraugusto/browser-extension-contexts/actions
+[action-image]: https://github.com/cezaraugusto/browser-extension-capabilities/actions/workflows/ci.yml/badge.svg?branch=main
+[action-url]: https://github.com/cezaraugusto/browser-extension-capabilities/actions
 
 # browser-extension-capabilities [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
 
