@@ -37,8 +37,10 @@ npm install browser-extension-capabilities
 ```typescript
 import { getExtensionCapabilities } from 'browser-extension-capabilities'
 
-// Analyze an extension directory
-const capabilities = getExtensionCapabilities('./path/to/extension')
+// Analyze an extension manifest file
+const capabilities = getExtensionCapabilities(
+  './path/to/extension/manifest.json',
+)
 
 // Returns array of capability objects
 console.log(capabilities)
@@ -76,13 +78,13 @@ console.log(capabilities)
 
 ## API Reference
 
-### `getExtensionCapabilities(dataDir: string): ExtensionCapability[]`
+### `getExtensionCapabilities(manifestPath: string): ExtensionCapability[]`
 
 Analyzes a browser extension manifest and returns an array of capability objects.
 
 #### Parameters
 
-- `dataDir` (string): Directory path containing the extension's `manifest.json` file
+- `manifestPath` (string): Direct path to the extension's `manifest.json` file
 
 #### Returns
 
@@ -94,7 +96,7 @@ Analyzes a browser extension manifest and returns an array of capability objects
 import { getExtensionCapabilities } from 'browser-extension-capabilities'
 
 try {
-  const capabilities = getExtensionCapabilities('./my-extension')
+  const capabilities = getExtensionCapabilities('./my-extension/manifest.json')
 
   capabilities.forEach(({ capability, description }) => {
     console.log(`${capability}: ${description}`)

@@ -14,7 +14,7 @@ describe('getExtensionCapabilities', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Mock path.join to return a predictable path
+    // Mock path.join to return a predictable path (no longer needed but keeping for compatibility)
     mockPath.join.mockReturnValue('/test/extension/manifest.json')
   })
 
@@ -35,7 +35,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'background',
@@ -60,7 +62,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'content_scripts',
@@ -82,7 +86,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'popup',
@@ -103,7 +109,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'sidebar',
@@ -122,7 +130,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'devtools',
@@ -143,7 +153,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'options',
@@ -164,7 +176,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'newtab',
@@ -185,7 +199,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'sandbox',
@@ -209,7 +225,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toContainEqual({
       capability: 'web_resources',
@@ -220,7 +238,9 @@ describe('getExtensionCapabilities', () => {
   test('should return manifest capability when manifest file is not found', () => {
     mockFs.existsSync.mockReturnValue(false)
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toEqual([
       {
@@ -234,7 +254,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue('invalid json')
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toEqual([
       {
@@ -254,7 +276,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toEqual([
       {
@@ -286,7 +310,9 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
-    const capabilities = getExtensionCapabilities('/test/extension')
+    const capabilities = getExtensionCapabilities(
+      '/test/extension/manifest.json',
+    )
 
     expect(capabilities).toHaveLength(3)
     expect(capabilities).toContainEqual({

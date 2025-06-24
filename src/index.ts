@@ -1,5 +1,4 @@
 import * as fs from 'fs'
-import * as path from 'path'
 
 // Types for better type safety
 interface ExtensionManifest {
@@ -64,12 +63,12 @@ interface ExtensionCapability {
  * Analyzes a browser extension manifest to extract all possible interfaces/capabilities
  * where the extension can run or interact with the browser.
  *
- * @param dataDir - Directory path containing the extension's manifest.json file
+ * @param manifestPath - Direct path to the extension's manifest.json file
  * @returns Array of capability objects with descriptions
  *
  * @example
  * ```typescript
- * const capabilities = getExtensionCapabilities('./extension');
+ * const capabilities = getExtensionCapabilities('./extension/manifest.json');
  * // Returns: [
  * //   { capability: "background", description: "Background service worker for persistent functionality" },
  * //   { capability: "content_scripts", description: "Content scripts that run on web pages" },
@@ -78,11 +77,9 @@ interface ExtensionCapability {
  * ```
  */
 export function getExtensionCapabilities(
-  dataDir: string,
+  manifestPath: string,
 ): ExtensionCapability[] {
   try {
-    const manifestPath = path.join(dataDir, 'manifest.json')
-
     if (!fs.existsSync(manifestPath)) {
       console.warn(`Manifest file not found at: ${manifestPath}`)
       return [
