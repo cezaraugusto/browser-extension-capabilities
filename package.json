@@ -2,7 +2,7 @@
   "name": "browser-extension-capabilities",
   "description": "Zero-dependency library for analyzing browser extension capabilities from manifest files",
   "packageManager": "pnpm@9.9.0",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": {
