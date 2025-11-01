@@ -1,11 +1,15 @@
 [npm-version-image]: https://img.shields.io/npm/v/browser-extension-capabilities.svg?color=0971fe
 [npm-version-url]: https://www.npmjs.com/package/browser-extension-capabilities
-[npm-downloads-image]: https://img.shields.io/npm/dm/browser-extension-capabilities.svg?color=0971fe
+[npm-downloads-image]: https://img.shields.io/npm/dm/browser-extension-capabilities.svg?color=2ecc40
 [npm-downloads-url]: https://www.npmjs.com/package/browser-extension-capabilities
 [action-image]: https://github.com/cezaraugusto/browser-extension-capabilities/actions/workflows/ci.yml/badge.svg?branch=main
 [action-url]: https://github.com/cezaraugusto/browser-extension-capabilities/actions
 
-# browser-extension-capabilities [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
+[![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
+
+# browser-extension-capabilities
+
+> Zero-dependency library for analyzing browser extension capabilities from manifest files
 
 A lightweight, zero-dependency TypeScript library for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
 
@@ -35,76 +39,98 @@ npm install browser-extension-capabilities
 ## Usage
 
 ```typescript
-import { getExtensionCapabilities } from 'browser-extension-capabilities'
+import {
+  getExtensionCapabilities,
+  getExtensionCapabilitiesAsync,
+  analyzeExtensionManifest,
+} from 'browser-extension-capabilities'
 
-// Analyze an extension manifest file
-const capabilities = getExtensionCapabilities(
+// 1) Sync (path)
+const caps1 = getExtensionCapabilities('./path/to/extension/manifest.json', {
+  includeFields: true,
+  normalizeNames: true,
+  includeCompatibility: true,
+})
+
+// 2) Async (path)
+const caps2 = await getExtensionCapabilitiesAsync(
   './path/to/extension/manifest.json',
+  { strict: true },
 )
 
-// Returns array of capability objects
-console.log(capabilities)
+// 3) Direct object
+import * as fs from 'fs'
+const manifest = JSON.parse(fs.readFileSync('./path/to/manifest.json', 'utf8'))
+const caps3 = analyzeExtensionManifest(manifest, { normalizeNames: true })
+
+console.log(caps1)
 // [
-//   {
-//     capability: "background",
-//     description: "Background service worker or page for persistent functionality"
-//   },
-//   {
-//     capability: "content_scripts",
-//     description: "Content scripts that run on web pages to interact with page content"
-//   },
-//   {
-//     capability: "popup",
-//     description: "Browser action popup or toolbar button functionality"
-//   }
+//   { capability: 'background', id: 'background', description: 'Background service worker or page for persistent functionality', fields: ['background.service_worker'] },
+//   { capability: 'content_scripts', id: 'content_scripts', description: 'Content scripts that run on web pages to interact with page content', fields: ['content_scripts'] },
+//   { capability: 'popup', id: 'action_popup', description: 'Toolbar popup UI', fields: ['action.default_popup'] },
 // ]
 ```
 
 ## Supported Capabilities
 
-| Capability          | Description                                                         | Manifest Fields                                                      |
-| ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **background**      | Background service worker or page for persistent functionality      | `background.page`, `background.scripts`, `background.service_worker` |
-| **content_scripts** | Content scripts that run on web pages to interact with page content | `content_scripts`                                                    |
-| **popup**           | Browser action popup or toolbar button functionality                | `action.default_popup`                                               |
-| **sidebar**         | Side panel interface for additional extension features              | `side_panel.default_path`, `sidebar_action.default_panel`            |
-| **devtools**        | Developer tools panel for debugging and development                 | `devtools_page`                                                      |
-| **options**         | Extension options page for user configuration                       | `options_ui.page`                                                    |
-| **newtab**          | Custom new tab page replacement                                     | `chrome_url_overrides.newtab`                                        |
-| **bookmarks**       | Custom bookmarks page replacement                                   | `chrome_url_overrides.bookmarks`                                     |
-| **history**         | Custom history page replacement                                     | `chrome_url_overrides.history`                                       |
-| **sandbox**         | Sandboxed pages with restricted permissions for security            | `sandbox.pages`                                                      |
-| **web_resources**   | Web accessible resources for content script communication           | `web_accessible_resources`                                           |
+| Capability                   | Description                                                         | Manifest Fields                                                                     |
+| ---------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **background**               | Background service worker or page for persistent functionality      | `background.page`, `background.scripts`, `background.service_worker`                |
+| **content_scripts**          | Content scripts that run on web pages to interact with page content | `content_scripts`                                                                   |
+| **popup**                    | Toolbar popup UI                                                    | `action.default_popup`, `browser_action.default_popup`, `page_action.default_popup` |
+| **sidebar**                  | Side panel UI                                                       | `side_panel.default_path`, `sidebar_action.default_panel`                           |
+| **devtools**                 | Developer tools panel                                               | `devtools_page`                                                                     |
+| **options**                  | Options page for user configuration                                 | `options_ui.page`, `options_page`                                                   |
+| **newtab**                   | New tab page override                                               | `chrome_url_overrides.newtab`                                                       |
+| **bookmarks**                | Custom bookmarks page replacement                                   | `chrome_url_overrides.bookmarks`                                                    |
+| **history**                  | History page override                                               | `chrome_url_overrides.history`                                                      |
+| **sandbox**                  | Sandboxed pages for isolated execution                              | `sandbox.pages`                                                                     |
+| **web_resources**            | Web-accessible resources exposed to web pages                       | `web_accessible_resources`                                                          |
+| **omnibox**                  | Omnibox keyword integration                                         | `omnibox.keyword`                                                                   |
+| **commands**                 | Keyboard shortcuts and command actions                              | `commands`                                                                          |
+| **settings_homepage**        | Browser settings override: homepage                                 | `chrome_settings_overrides.homepage`                                                |
+| **settings_search_provider** | Browser settings override: search provider                          | `chrome_settings_overrides.search_provider`                                         |
+| **settings_startup_pages**   | Browser settings override: startup pages                            | `chrome_settings_overrides.startup_pages`                                           |
+| **declarative_net_request**  | Declarative network request rules                                   | `declarative_net_request.rule_resources`                                            |
+| **tts_engine**               | Text-to-speech engine                                               | `tts_engine.voices`                                                                 |
 
 ## API Reference
 
-### `getExtensionCapabilities(manifestPath: string): ExtensionCapability[]`
+### `getExtensionCapabilities(manifestPath: string, options?: GetCapabilitiesOptions): ExtensionCapability[]`
 
-Analyzes a browser extension manifest and returns an array of capability objects.
+Analyzes a browser extension manifest from a file path and returns an array of capability objects.
 
 #### Parameters
 
 - `manifestPath` (string): Direct path to the extension's `manifest.json` file
+- `options` (optional): See Options below
 
 #### Returns
 
-- `ExtensionCapability[]`: Array of capability objects with `capability` and `description` properties
+- `ExtensionCapability[]`: Array of capability objects with `capability`, `description`, and optionally `id` and `fields` when enabled via options
 
 #### Example
 
 ```typescript
 import { getExtensionCapabilities } from 'browser-extension-capabilities'
 
-try {
-  const capabilities = getExtensionCapabilities('./my-extension/manifest.json')
+const capabilities = getExtensionCapabilities('./my-extension/manifest.json', {
+  includeFields: true,
+  normalizeNames: true,
+})
 
-  capabilities.forEach(({ capability, description }) => {
-    console.log(`${capability}: ${description}`)
-  })
-} catch (error) {
-  console.error('Failed to analyze extension:', error)
-}
+capabilities.forEach(({ capability, id, description, fields }) => {
+  console.log(`${id ?? capability}: ${description}`, fields ?? [])
+})
 ```
+
+### `getExtensionCapabilitiesAsync(manifestPath: string, options?: GetCapabilitiesOptions): Promise<ExtensionCapability[]>`
+
+Async variant of the path-based API. Respects the same options and error handling semantics.
+
+### `analyzeExtensionManifest(manifest: ExtensionManifest, options?: GetCapabilitiesOptions): ExtensionCapability[]`
+
+Analyzes a manifest object directly without reading from disk.
 
 ### Types
 
@@ -112,6 +138,39 @@ try {
 interface ExtensionCapability {
   capability: string
   description: string
+  id?: string // normalized manifest-aligned name (e.g., "web_accessible_resources")
+  fields?: string[] // manifest fields that triggered this capability
+  compatibility?: {
+    safari?: boolean
+    notes?: string
+    docs?: string
+  }
+}
+
+interface GetCapabilitiesOptions {
+  strict?: boolean // throw on missing/invalid manifest when true
+  includeFields?: boolean // include manifest field paths in each capability
+  normalizeNames?: boolean // include normalized id aligned with manifest naming
+  includeCompatibility?: boolean // include Safari-focused compatibility metadata per capability
+}
+```
+
+### Compatibility metadata (Safari-focused)
+
+When `includeCompatibility: true` is set, each capability may include a `compatibility` object with conservative Safari support and notes.
+
+Example output snippet:
+
+```json
+{
+  "capability": "sidebar",
+  "description": "Side panel UI",
+  "id": "sidebar",
+  "compatibility": {
+    "safari": false,
+    "notes": "Chromium uses side_panel; Firefox uses sidebar_action. Safari does not provide an equivalent sidebar UI API.",
+    "docs": "https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/user_interface"
+  }
 }
 ```
 
@@ -119,8 +178,8 @@ interface ExtensionCapability {
 
 The library gracefully handles various error scenarios:
 
-- **Missing manifest file**: Returns `[{ capability: "manifest", description: "Basic extension manifest configuration" }]`
-- **Invalid JSON**: Returns fallback capability with error logging
+- **Missing manifest file**: Returns `[{ capability: "manifest", description: "Basic extension manifest configuration" }]` (or throws when `strict: true`)
+- **Invalid JSON**: Returns fallback capability with error logging (or throws when `strict: true`)
 - **Malformed manifest**: Attempts to extract available capabilities and falls back gracefully
 
 ## Use Cases
