@@ -1,5 +1,8 @@
 import { expect, test, describe, beforeEach, afterEach } from 'vitest'
-import { getExtensionCapabilities } from '../src/index'
+import {
+  getExtensionCapabilities,
+  analyzeExtensionManifest,
+} from '../src/index'
 import * as fs from 'fs'
 import * as path from 'path'
 import { vi } from 'vitest'
@@ -92,7 +95,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'popup',
-      description: 'Browser action popup or toolbar button functionality',
+      description: 'Toolbar popup UI',
     })
   })
 
@@ -115,7 +118,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'sidebar',
-      description: 'Side panel interface for additional extension features',
+      description: 'Side panel UI',
     })
   })
 
@@ -136,7 +139,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'devtools',
-      description: 'Developer tools panel for debugging and development',
+      description: 'Developer tools panel',
     })
   })
 
@@ -159,7 +162,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'options',
-      description: 'Extension options page for user configuration',
+      description: 'Options page for user configuration',
     })
   })
 
@@ -182,7 +185,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'newtab',
-      description: 'Custom new tab page replacement',
+      description: 'New tab page override',
     })
   })
 
@@ -205,7 +208,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'sandbox',
-      description: 'Sandboxed pages with restricted permissions for security',
+      description: 'Sandboxed pages for isolated execution',
     })
   })
 
@@ -231,7 +234,7 @@ describe('getExtensionCapabilities', () => {
 
     expect(capabilities).toContainEqual({
       capability: 'web_resources',
-      description: 'Web accessible resources for content script communication',
+      description: 'Web-accessible resources exposed to web pages',
     })
   })
 
@@ -327,7 +330,172 @@ describe('getExtensionCapabilities', () => {
     })
     expect(capabilities).toContainEqual({
       capability: 'popup',
-      description: 'Browser action popup or toolbar button functionality',
+      description: 'Toolbar popup UI',
     })
+  })
+
+  test('should detect MV2 options_page and browser_action', () => {
+    const manifest = {
+      manifest_version: 2,
+      name: 'Test Extension',
+      version: '1.0.0',
+      options_page: 'options.html',
+      browser_action: { default_popup: 'popup.html' },
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any)
+
+    expect(capabilities).toEqual(
+      expect.arrayContaining([
+        {
+          capability: 'options',
+          description: 'Options page for user configuration',
+        },
+        { capability: 'popup', description: 'Toolbar popup UI' },
+      ]),
+    )
+  })
+
+  test('should detect MV2 web_accessible_resources as string array', () => {
+    const manifest = {
+      manifest_version: 2,
+      name: 'Test Extension',
+      version: '1.0.0',
+      web_accessible_resources: ['a.js', 'b.css'],
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any)
+    expect(capabilities).toEqual(
+      expect.arrayContaining([
+        {
+          capability: 'web_resources',
+          description: 'Web-accessible resources exposed to web pages',
+        },
+      ]),
+    )
+  })
+
+  test('should detect omnibox and commands capabilities', () => {
+    const manifest = {
+      manifest_version: 3,
+      name: 'Test Extension',
+      version: '1.0.0',
+      omnibox: { keyword: 'foo' },
+      commands: { _execute_action: {} },
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any)
+    expect(capabilities).toEqual(
+      expect.arrayContaining([
+        { capability: 'omnibox', description: 'Omnibox keyword integration' },
+        {
+          capability: 'commands',
+          description: 'Keyboard shortcuts and command actions',
+        },
+      ]),
+    )
+  })
+
+  test('should detect settings overrides and declarative_net_request and tts_engine', () => {
+    const manifest = {
+      manifest_version: 3,
+      name: 'Test Extension',
+      version: '1.0.0',
+      chrome_settings_overrides: {
+        homepage: 'https://example.com',
+        search_provider: { name: 'Example' },
+        startup_pages: ['https://a.com'],
+      },
+      declarative_net_request: {
+        rule_resources: [{ id: 'rules', path: 'rules.json' }],
+      },
+      tts_engine: { voices: [{}] },
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any)
+    expect(capabilities).toEqual(
+      expect.arrayContaining([
+        {
+          capability: 'settings_homepage',
+          description: 'Browser settings override: homepage',
+        },
+        {
+          capability: 'settings_search_provider',
+          description: 'Browser settings override: search provider',
+        },
+        {
+          capability: 'settings_startup_pages',
+          description: 'Browser settings override: startup pages',
+        },
+        {
+          capability: 'declarative_net_request',
+          description: 'Declarative network request rules',
+        },
+        { capability: 'tts_engine', description: 'Text-to-speech engine' },
+      ]),
+    )
+  })
+
+  test('should include fields and normalized id when options are enabled', () => {
+    const manifest = {
+      manifest_version: 3,
+      name: 'Test Extension',
+      version: '1.0.0',
+      action: { default_popup: 'popup.html' },
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any, {
+      includeFields: true,
+      normalizeNames: true,
+    })
+
+    const popup = capabilities.find((c) => c.capability === 'popup')!
+    expect(popup.id).toBeDefined()
+    expect(Array.isArray(popup.fields)).toBe(true)
+    expect(popup.fields!.length).toBeGreaterThan(0)
+  })
+
+  test('should expose compatibility metadata when enabled', () => {
+    const manifest = {
+      manifest_version: 3,
+      name: 'Test Extension',
+      version: '1.0.0',
+      action: { default_popup: 'popup.html' },
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any, {
+      includeCompatibility: true,
+      normalizeNames: true,
+    })
+
+    const popup = capabilities.find((c) => c.capability === 'popup')!
+    expect(popup.compatibility).toBeDefined()
+    expect(popup.compatibility?.safari).toBe(true)
+  })
+
+  test('should ignore whitespace-only string fields in detection', () => {
+    const manifest = {
+      manifest_version: 3,
+      name: 'Test Extension',
+      version: '1.0.0',
+      action: { default_popup: '   ' },
+      devtools_page: '  ',
+      options_ui: { page: '   ' },
+      side_panel: { default_path: '  ' },
+      sidebar_action: { default_panel: '   ' },
+      chrome_url_overrides: { newtab: '  ', bookmarks: ' ', history: ' ' },
+      background: { page: '  ', service_worker: ' ', scripts: ['   '] },
+      web_accessible_resources: ['   '],
+    }
+
+    const capabilities = analyzeExtensionManifest(manifest as any)
+
+    // Should fall back to manifest only, because nothing valid should be detected
+    expect(capabilities).toEqual([
+      {
+        capability: 'manifest',
+        description: 'Basic extension manifest configuration',
+      },
+    ])
   })
 })
