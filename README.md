@@ -5,11 +5,9 @@
 [action-image]: https://github.com/cezaraugusto/browser-extension-capabilities/actions/workflows/ci.yml/badge.svg?branch=main
 [action-url]: https://github.com/cezaraugusto/browser-extension-capabilities/actions
 
-[![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
-
-# browser-extension-capabilities
-
 > Zero-dependency library for analyzing browser extension capabilities from manifest files
+
+# browser-extension-capabilities [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
 
 A lightweight, zero-dependency TypeScript library for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
 
@@ -198,4 +196,4 @@ The library gracefully handles various error scenarios:
 
 ## License
 
-MIT (c) Cezar Augusto
+MIT (c) Cezar Augusto.
