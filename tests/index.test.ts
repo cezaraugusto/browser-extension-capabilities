@@ -1,11 +1,12 @@
-import { expect, test, describe, beforeEach, afterEach } from 'vitest'
-import {
-  getExtensionCapabilities,
-  analyzeExtensionManifest,
-} from '../src/index'
 import * as fs from 'fs'
 import * as path from 'path'
-import { vi } from 'vitest'
+
+import {expect, test, describe, beforeEach, afterEach, vi} from 'vitest'
+
+import {
+  getExtensionCapabilities,
+  analyzeExtensionManifest
+} from '../src/index'
 
 // Mock fs module
 vi.mock('fs')
@@ -31,21 +32,21 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       background: {
-        service_worker: 'background.js',
-      },
+        service_worker: 'background.js'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'background',
       description:
-        'Background service worker or page for persistent functionality',
+        'Background service worker or page for persistent functionality'
     })
   })
 
@@ -57,22 +58,22 @@ describe('getExtensionCapabilities', () => {
       content_scripts: [
         {
           matches: ['<all_urls>'],
-          js: ['content.js'],
-        },
-      ],
+          js: ['content.js']
+        }
+      ]
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'content_scripts',
       description:
-        'Content scripts that run on web pages to interact with page content',
+        'Content scripts that run on web pages to interact with page content'
     })
   })
 
@@ -82,20 +83,20 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       action: {
-        default_popup: 'popup.html',
-      },
+        default_popup: 'popup.html'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'popup',
-      description: 'Toolbar popup UI',
+      description: 'Toolbar popup UI'
     })
   })
 
@@ -105,20 +106,20 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       side_panel: {
-        default_path: 'sidebar.html',
-      },
+        default_path: 'sidebar.html'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'sidebar',
-      description: 'Side panel UI',
+      description: 'Side panel UI'
     })
   })
 
@@ -127,19 +128,19 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      devtools_page: 'devtools.html',
+      devtools_page: 'devtools.html'
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'devtools',
-      description: 'Developer tools panel',
+      description: 'Developer tools panel'
     })
   })
 
@@ -149,20 +150,20 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       options_ui: {
-        page: 'options.html',
-      },
+        page: 'options.html'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'options',
-      description: 'Options page for user configuration',
+      description: 'Options page for user configuration'
     })
   })
 
@@ -172,20 +173,20 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       chrome_url_overrides: {
-        newtab: 'newtab.html',
-      },
+        newtab: 'newtab.html'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'newtab',
-      description: 'New tab page override',
+      description: 'New tab page override'
     })
   })
 
@@ -195,20 +196,20 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       sandbox: {
-        pages: ['sandbox.html'],
-      },
+        pages: ['sandbox.html']
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'sandbox',
-      description: 'Sandboxed pages for isolated execution',
+      description: 'Sandboxed pages for isolated execution'
     })
   })
 
@@ -220,21 +221,21 @@ describe('getExtensionCapabilities', () => {
       web_accessible_resources: [
         {
           resources: ['injected.js'],
-          matches: ['<all_urls>'],
-        },
-      ],
+          matches: ['<all_urls>']
+        }
+      ]
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toContainEqual({
       capability: 'web_resources',
-      description: 'Web-accessible resources exposed to web pages',
+      description: 'Web-accessible resources exposed to web pages'
     })
   })
 
@@ -242,14 +243,14 @@ describe('getExtensionCapabilities', () => {
     mockFs.existsSync.mockReturnValue(false)
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toEqual([
       {
         capability: 'manifest',
-        description: 'Basic extension manifest configuration',
-      },
+        description: 'Basic extension manifest configuration'
+      }
     ])
   })
 
@@ -258,14 +259,14 @@ describe('getExtensionCapabilities', () => {
     mockFs.readFileSync.mockReturnValue('invalid json')
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toEqual([
       {
         capability: 'manifest',
-        description: 'Basic extension manifest configuration',
-      },
+        description: 'Basic extension manifest configuration'
+      }
     ])
   })
 
@@ -273,21 +274,21 @@ describe('getExtensionCapabilities', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
-      version: '1.0.0',
+      version: '1.0.0'
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toEqual([
       {
         capability: 'manifest',
-        description: 'Basic extension manifest configuration',
-      },
+        description: 'Basic extension manifest configuration'
+      }
     ])
   })
 
@@ -297,40 +298,40 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       background: {
-        service_worker: 'background.js',
+        service_worker: 'background.js'
       },
       content_scripts: [
         {
           matches: ['<all_urls>'],
-          js: ['content.js'],
-        },
+          js: ['content.js']
+        }
       ],
       action: {
-        default_popup: 'popup.html',
-      },
+        default_popup: 'popup.html'
+      }
     }
 
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
 
     const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json',
+      '/test/extension/manifest.json'
     )
 
     expect(capabilities).toHaveLength(3)
     expect(capabilities).toContainEqual({
       capability: 'background',
       description:
-        'Background service worker or page for persistent functionality',
+        'Background service worker or page for persistent functionality'
     })
     expect(capabilities).toContainEqual({
       capability: 'content_scripts',
       description:
-        'Content scripts that run on web pages to interact with page content',
+        'Content scripts that run on web pages to interact with page content'
     })
     expect(capabilities).toContainEqual({
       capability: 'popup',
-      description: 'Toolbar popup UI',
+      description: 'Toolbar popup UI'
     })
   })
 
@@ -340,7 +341,7 @@ describe('getExtensionCapabilities', () => {
       name: 'Test Extension',
       version: '1.0.0',
       options_page: 'options.html',
-      browser_action: { default_popup: 'popup.html' },
+      browser_action: {default_popup: 'popup.html'}
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any)
@@ -349,10 +350,10 @@ describe('getExtensionCapabilities', () => {
       expect.arrayContaining([
         {
           capability: 'options',
-          description: 'Options page for user configuration',
+          description: 'Options page for user configuration'
         },
-        { capability: 'popup', description: 'Toolbar popup UI' },
-      ]),
+        {capability: 'popup', description: 'Toolbar popup UI'}
+      ])
     )
   })
 
@@ -361,17 +362,18 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 2,
       name: 'Test Extension',
       version: '1.0.0',
-      web_accessible_resources: ['a.js', 'b.css'],
+      web_accessible_resources: ['a.js', 'b.css']
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any)
+
     expect(capabilities).toEqual(
       expect.arrayContaining([
         {
           capability: 'web_resources',
-          description: 'Web-accessible resources exposed to web pages',
-        },
-      ]),
+          description: 'Web-accessible resources exposed to web pages'
+        }
+      ])
     )
   })
 
@@ -380,19 +382,20 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      omnibox: { keyword: 'foo' },
-      commands: { _execute_action: {} },
+      omnibox: {keyword: 'foo'},
+      commands: {_execute_action: {}}
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any)
+
     expect(capabilities).toEqual(
       expect.arrayContaining([
-        { capability: 'omnibox', description: 'Omnibox keyword integration' },
+        {capability: 'omnibox', description: 'Omnibox keyword integration'},
         {
           capability: 'commands',
-          description: 'Keyboard shortcuts and command actions',
-        },
-      ]),
+          description: 'Keyboard shortcuts and command actions'
+        }
+      ])
     )
   })
 
@@ -403,36 +406,37 @@ describe('getExtensionCapabilities', () => {
       version: '1.0.0',
       chrome_settings_overrides: {
         homepage: 'https://example.com',
-        search_provider: { name: 'Example' },
-        startup_pages: ['https://a.com'],
+        search_provider: {name: 'Example'},
+        startup_pages: ['https://a.com']
       },
       declarative_net_request: {
-        rule_resources: [{ id: 'rules', path: 'rules.json' }],
+        rule_resources: [{id: 'rules', path: 'rules.json'}]
       },
-      tts_engine: { voices: [{}] },
+      tts_engine: {voices: [{}]}
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any)
+
     expect(capabilities).toEqual(
       expect.arrayContaining([
         {
           capability: 'settings_homepage',
-          description: 'Browser settings override: homepage',
+          description: 'Browser settings override: homepage'
         },
         {
           capability: 'settings_search_provider',
-          description: 'Browser settings override: search provider',
+          description: 'Browser settings override: search provider'
         },
         {
           capability: 'settings_startup_pages',
-          description: 'Browser settings override: startup pages',
+          description: 'Browser settings override: startup pages'
         },
         {
           capability: 'declarative_net_request',
-          description: 'Declarative network request rules',
+          description: 'Declarative network request rules'
         },
-        { capability: 'tts_engine', description: 'Text-to-speech engine' },
-      ]),
+        {capability: 'tts_engine', description: 'Text-to-speech engine'}
+      ])
     )
   })
 
@@ -441,15 +445,16 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      action: { default_popup: 'popup.html' },
+      action: {default_popup: 'popup.html'}
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any, {
       includeFields: true,
-      normalizeNames: true,
+      normalizeNames: true
     })
 
     const popup = capabilities.find((c) => c.capability === 'popup')!
+
     expect(popup.id).toBeDefined()
     expect(Array.isArray(popup.fields)).toBe(true)
     expect(popup.fields!.length).toBeGreaterThan(0)
@@ -460,15 +465,16 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      action: { default_popup: 'popup.html' },
+      action: {default_popup: 'popup.html'}
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any, {
       includeCompatibility: true,
-      normalizeNames: true,
+      normalizeNames: true
     })
 
     const popup = capabilities.find((c) => c.capability === 'popup')!
+
     expect(popup.compatibility).toBeDefined()
     expect(popup.compatibility?.safari).toBe(true)
   })
@@ -478,14 +484,14 @@ describe('getExtensionCapabilities', () => {
       manifest_version: 3,
       name: 'Test Extension',
       version: '1.0.0',
-      action: { default_popup: '   ' },
+      action: {default_popup: '   '},
       devtools_page: '  ',
-      options_ui: { page: '   ' },
-      side_panel: { default_path: '  ' },
-      sidebar_action: { default_panel: '   ' },
-      chrome_url_overrides: { newtab: '  ', bookmarks: ' ', history: ' ' },
-      background: { page: '  ', service_worker: ' ', scripts: ['   '] },
-      web_accessible_resources: ['   '],
+      options_ui: {page: '   '},
+      side_panel: {default_path: '  '},
+      sidebar_action: {default_panel: '   '},
+      chrome_url_overrides: {newtab: '  ', bookmarks: ' ', history: ' '},
+      background: {page: '  ', service_worker: ' ', scripts: ['   ']},
+      web_accessible_resources: ['   ']
     }
 
     const capabilities = analyzeExtensionManifest(manifest as any)
@@ -494,8 +500,8 @@ describe('getExtensionCapabilities', () => {
     expect(capabilities).toEqual([
       {
         capability: 'manifest',
-        description: 'Basic extension manifest configuration',
-      },
+        description: 'Basic extension manifest configuration'
+      }
     ])
   })
 })

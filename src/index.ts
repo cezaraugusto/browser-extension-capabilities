@@ -72,17 +72,17 @@ export interface ExtensionManifest {
 
   // Web-accessible resources (MV2 + MV3)
   web_accessible_resources?: Array<
-    | string
-    | {
-        resources: string[]
-        matches?: string[]
-        extension_ids?: string[]
-        use_dynamic_url?: boolean
-      }
+    | string |
+    {
+      resources: string[]
+      matches?: string[]
+      extension_ids?: string[]
+      use_dynamic_url?: boolean
+    }
   >
 
   // Common additional capabilities
-  omnibox?: { keyword: string }
+  omnibox?: {keyword: string}
   commands?: Record<string, unknown>
   chrome_settings_overrides?: {
     homepage?: string
@@ -90,7 +90,7 @@ export interface ExtensionManifest {
     startup_pages?: string[]
   }
   declarative_net_request?: {
-    rule_resources?: Array<{ id: string; enabled?: boolean; path: string }>
+    rule_resources?: Array<{id: string; enabled?: boolean; path: string}>
   }
   tts_engine?: {
     voices?: Array<Record<string, unknown>>
@@ -123,88 +123,93 @@ export interface CapabilityCompatibility {
 }
 
 const CAP_COMPAT: Record<string, CapabilityCompatibility> = {
-  background: { safari: true },
-  content_scripts: { safari: true },
-  popup: { safari: true },
-  action_popup: { safari: true },
+  background: {safari: true},
+  content_scripts: {safari: true},
+  popup: {safari: true},
+  action_popup: {safari: true},
   sidebar: {
     safari: false,
     notes:
       'Chromium uses side_panel; Firefox uses sidebar_action. Safari does not provide an equivalent sidebar UI API.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/user_interface',
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/user_interface'
   },
-  devtools_page: { safari: true },
-  options: { safari: true },
-  web_accessible_resources: { safari: true },
-  commands: { safari: true },
+  devtools_page: {safari: true},
+  options: {safari: true},
+  web_accessible_resources: {safari: true},
+  commands: {safari: true},
   omnibox: {
     safari: false,
     notes: 'Safari does not support Omnibox keyword for WebExtensions.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/omnibox',
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/omnibox'
   },
   'chrome_url_overrides.newtab': {
     safari: false,
     notes: 'Safari does not support chrome_url_overrides.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides',
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides'
   },
   'chrome_url_overrides.bookmarks': {
     safari: false,
     notes:
       'Safari does not support bookmarks/history overrides via chrome_url_overrides.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides',
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides'
   },
   'chrome_url_overrides.history': {
     safari: false,
     notes:
       'Safari does not support bookmarks/history overrides via chrome_url_overrides.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides',
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/chrome_url_overrides'
   },
   declarative_net_request: {
     safari: false,
     notes:
       'Safari uses a different content blocking model; DNR is not supported.',
-    docs: 'https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/',
+    docs: 'https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/'
   },
   tts_engine: {
     safari: false,
     notes: 'Speech engine APIs are not available for Safari WebExtensions.',
-    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/tts_engine',
-  },
+    docs: 'https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/tts_engine'
+  }
 }
 
-function isNonEmptyString(value: unknown): value is string {
+function isNonEmptyString (value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
-function hasNonEmptyString(arr: unknown): boolean {
+function hasNonEmptyString (arr: unknown): boolean {
   return Array.isArray(arr) && arr.some((v) => isNonEmptyString(v))
 }
 
-function pushCapability(
+function pushCapability (
   map: Map<string, ExtensionCapability>,
   key: string,
   description: string,
   opts?: GetCapabilitiesOptions,
   fields?: string[],
-  normalizedId?: string,
+  normalizedId?: string
 ) {
   const entry: ExtensionCapability = {
     capability: key,
-    description,
+    description
   }
+
   if (opts?.includeFields && fields?.length) entry.fields = fields
+
   if (opts?.normalizeNames && normalizedId) entry.id = normalizedId
+
   if (opts?.includeCompatibility) {
     const compatKey = normalizedId ?? key
     const compat = CAP_COMPAT[compatKey]
+
     if (compat) entry.compatibility = compat
   }
+
   map.set(key, entry)
 }
 
-export function analyzeExtensionManifest(
+export function analyzeExtensionManifest (
   manifest: ExtensionManifest,
-  options?: GetCapabilitiesOptions,
+  options?: GetCapabilitiesOptions
 ): ExtensionCapability[] {
   const capabilityMap = new Map<string, ExtensionCapability>()
   const opts = options ?? {}
@@ -223,7 +228,7 @@ export function analyzeExtensionManifest(
         'Background service worker or page for persistent functionality',
         opts,
         ['background.page', 'background.scripts', 'background.service_worker'],
-        'background',
+        'background'
       )
     }
   }
@@ -239,7 +244,7 @@ export function analyzeExtensionManifest(
       'Content scripts that run on web pages to interact with page content',
       opts,
       ['content_scripts'],
-      'content_scripts',
+      'content_scripts'
     )
   }
 
@@ -257,9 +262,9 @@ export function analyzeExtensionManifest(
       [
         'action.default_popup',
         'browser_action.default_popup',
-        'page_action.default_popup',
+        'page_action.default_popup'
       ],
-      'action_popup',
+      'action_popup'
     )
   }
 
@@ -274,7 +279,7 @@ export function analyzeExtensionManifest(
       'Side panel UI',
       opts,
       ['side_panel.default_path', 'sidebar_action.default_panel'],
-      'sidebar',
+      'sidebar'
     )
   }
 
@@ -286,7 +291,7 @@ export function analyzeExtensionManifest(
       'Developer tools panel',
       opts,
       ['devtools_page'],
-      'devtools_page',
+      'devtools_page'
     )
   }
 
@@ -301,7 +306,7 @@ export function analyzeExtensionManifest(
       'Options page for user configuration',
       opts,
       ['options_ui.page', 'options_page'],
-      'options',
+      'options'
     )
   }
 
@@ -314,9 +319,10 @@ export function analyzeExtensionManifest(
         'New tab page override',
         opts,
         ['chrome_url_overrides.newtab'],
-        'chrome_url_overrides.newtab',
+        'chrome_url_overrides.newtab'
       )
     }
+
     if (isNonEmptyString(manifest.chrome_url_overrides.bookmarks)) {
       pushCapability(
         capabilityMap,
@@ -324,9 +330,10 @@ export function analyzeExtensionManifest(
         'Bookmarks page override',
         opts,
         ['chrome_url_overrides.bookmarks'],
-        'chrome_url_overrides.bookmarks',
+        'chrome_url_overrides.bookmarks'
       )
     }
+
     if (isNonEmptyString(manifest.chrome_url_overrides.history)) {
       pushCapability(
         capabilityMap,
@@ -334,7 +341,7 @@ export function analyzeExtensionManifest(
         'History page override',
         opts,
         ['chrome_url_overrides.history'],
-        'chrome_url_overrides.history',
+        'chrome_url_overrides.history'
       )
     }
   }
@@ -350,7 +357,7 @@ export function analyzeExtensionManifest(
       'Sandboxed pages for isolated execution',
       opts,
       ['sandbox.pages'],
-      'sandbox',
+      'sandbox'
     )
   }
 
@@ -365,8 +372,9 @@ export function analyzeExtensionManifest(
         (typeof item === 'object' &&
           item &&
           Array.isArray((item as any).resources) &&
-          (item as any).resources.some((r: unknown) => isNonEmptyString(r))),
+          (item as any).resources.some((r: unknown) => isNonEmptyString(r)))
     )
+
   if (hasWAR) {
     pushCapability(
       capabilityMap,
@@ -374,7 +382,7 @@ export function analyzeExtensionManifest(
       'Web-accessible resources exposed to web pages',
       opts,
       ['web_accessible_resources'],
-      'web_accessible_resources',
+      'web_accessible_resources'
     )
   }
 
@@ -386,7 +394,7 @@ export function analyzeExtensionManifest(
       'Omnibox keyword integration',
       opts,
       ['omnibox.keyword'],
-      'omnibox',
+      'omnibox'
     )
   }
 
@@ -398,7 +406,7 @@ export function analyzeExtensionManifest(
       'Keyboard shortcuts and command actions',
       opts,
       ['commands'],
-      'commands',
+      'commands'
     )
   }
 
@@ -411,9 +419,10 @@ export function analyzeExtensionManifest(
         'Browser settings override: homepage',
         opts,
         ['chrome_settings_overrides.homepage'],
-        'chrome_settings_overrides.homepage',
+        'chrome_settings_overrides.homepage'
       )
     }
+
     if (manifest.chrome_settings_overrides.search_provider) {
       pushCapability(
         capabilityMap,
@@ -421,9 +430,10 @@ export function analyzeExtensionManifest(
         'Browser settings override: search provider',
         opts,
         ['chrome_settings_overrides.search_provider'],
-        'chrome_settings_overrides.search_provider',
+        'chrome_settings_overrides.search_provider'
       )
     }
+
     if (
       Array.isArray(manifest.chrome_settings_overrides.startup_pages) &&
       manifest.chrome_settings_overrides.startup_pages.length > 0
@@ -434,7 +444,7 @@ export function analyzeExtensionManifest(
         'Browser settings override: startup pages',
         opts,
         ['chrome_settings_overrides.startup_pages'],
-        'chrome_settings_overrides.startup_pages',
+        'chrome_settings_overrides.startup_pages'
       )
     }
   }
@@ -450,7 +460,7 @@ export function analyzeExtensionManifest(
       'Declarative network request rules',
       opts,
       ['declarative_net_request.rule_resources'],
-      'declarative_net_request',
+      'declarative_net_request'
     )
   }
 
@@ -465,7 +475,7 @@ export function analyzeExtensionManifest(
       'Text-to-speech engine',
       opts,
       ['tts_engine.voices'],
-      'tts_engine',
+      'tts_engine'
     )
   }
 
@@ -473,87 +483,97 @@ export function analyzeExtensionManifest(
     ? Array.from(capabilityMap.values()).sort((a, b) => {
         const ak = (a.id ?? a.capability).toLowerCase()
         const bk = (b.id ?? b.capability).toLowerCase()
+
         return ak.localeCompare(bk)
       })
     : [
         {
           capability: 'manifest',
           description: 'Basic extension manifest configuration',
-          ...(opts.normalizeNames ? { id: 'manifest' } : {}),
-          ...(opts.includeFields ? { fields: [] } : {}),
-        },
+          ...(opts.normalizeNames ? {id: 'manifest'} : {}),
+          ...(opts.includeFields ? {fields: []} : {})
+        }
       ]
 }
 
-export function getExtensionCapabilities(
+export function getExtensionCapabilities (
   manifestPath: string,
-  options?: GetCapabilitiesOptions,
+  options?: GetCapabilitiesOptions
 ): ExtensionCapability[] {
   try {
     if (!fs.existsSync(manifestPath)) {
-      if (options?.strict)
-        throw new Error(`Manifest file not found at: ${manifestPath}`)
+      if (options?.strict) { throw new Error(`Manifest file not found at: ${manifestPath}`) }
+
       console.warn(`Manifest file not found at: ${manifestPath}`)
+
       return [
         {
           capability: 'manifest',
           description: 'Basic extension manifest configuration',
-          ...(options?.normalizeNames ? { id: 'manifest' } : {}),
-          ...(options?.includeFields ? { fields: [] } : {}),
-        },
+          ...(options?.normalizeNames ? {id: 'manifest'} : {}),
+          ...(options?.includeFields ? {fields: []} : {})
+        }
       ]
     }
+
     const manifestContent = fs.readFileSync(manifestPath, 'utf8')
     const manifest = JSON.parse(manifestContent) as ExtensionManifest
+
     return analyzeExtensionManifest(manifest, options)
   } catch (error) {
     if (options?.strict) throw error
+
     console.error('Error analyzing extension manifest:', error)
+
     return [
       {
         capability: 'manifest',
         description: 'Basic extension manifest configuration',
-        ...(options?.normalizeNames ? { id: 'manifest' } : {}),
-        ...(options?.includeFields ? { fields: [] } : {}),
-      },
+        ...(options?.normalizeNames ? {id: 'manifest'} : {}),
+        ...(options?.includeFields ? {fields: []} : {})
+      }
     ]
   }
 }
 
-export async function getExtensionCapabilitiesAsync(
+export async function getExtensionCapabilitiesAsync (
   manifestPath: string,
-  options?: GetCapabilitiesOptions,
+  options?: GetCapabilitiesOptions
 ): Promise<ExtensionCapability[]> {
   try {
     await fs.promises.access(manifestPath, fs.constants.F_OK)
   } catch {
-    if (options?.strict)
-      throw new Error(`Manifest file not found at: ${manifestPath}`)
+    if (options?.strict) { throw new Error(`Manifest file not found at: ${manifestPath}`) }
+
     console.warn(`Manifest file not found at: ${manifestPath}`)
+
     return [
       {
         capability: 'manifest',
         description: 'Basic extension manifest configuration',
-        ...(options?.normalizeNames ? { id: 'manifest' } : {}),
-        ...(options?.includeFields ? { fields: [] } : {}),
-      },
+        ...(options?.normalizeNames ? {id: 'manifest'} : {}),
+        ...(options?.includeFields ? {fields: []} : {})
+      }
     ]
   }
 
   try {
     const manifestContent = await fs.promises.readFile(manifestPath, 'utf8')
     const manifest = JSON.parse(manifestContent) as ExtensionManifest
+
     return analyzeExtensionManifest(manifest, options)
   } catch (error) {
     if (options?.strict) throw error
+
     console.error('Error analyzing extension manifest:', error)
+
     return [
       {
         capability: 'manifest',
         description: 'Basic extension manifest configuration',
-        ...(options?.normalizeNames ? { id: 'manifest' } : {}),
-        ...(options?.includeFields ? { fields: [] } : {}),
-      },
+        ...(options?.normalizeNames ? {id: 'manifest'} : {}),
+        ...(options?.includeFields ? {fields: []} : {})
+      }
     ]
   }
 }
