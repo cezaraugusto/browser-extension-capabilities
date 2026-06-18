@@ -34,10 +34,32 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # The compat-data source is a separate repo. While it is not yet published
+      # to GitHub these two steps no-op (checkout is non-fatal, build is gated on
+      # its success) and the verify step skips. Once the repo exists, the clone
+      # succeeds and the drift check becomes a hard gate automatically.
+      - name: Check out compat-data source
+        id: compat_src
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: cezaraugusto/browser-extension-compat-data
+          path: compat-data-src
+
+      - name: Build compat-data source
+        if: steps.compat_src.outcome == 'success'
+        working-directory: compat-data-src
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm build
+
       - name: Verify generated compat is up to date
-        # Skips cleanly when browser-extension-compat-data is not checked out
-        # alongside this repo; fails if the committed snapshot has drifted.
+        # Regenerates from the built compat-data source and fails if the
+        # committed snapshot has drifted. Skips when the source is unavailable.
+        # Run `pnpm data:build-compat` to sync.
         run: pnpm verify:compat
+        env:
+          COMPAT_DATA_DIST: ${{ github.workspace }}/compat-data-src/dist/index.js
 
       - name: Build
         run: pnpm build
