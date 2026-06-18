@@ -9,30 +9,58 @@
 
 # browser-extension-capabilities [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
 
-A lightweight, zero-dependency TypeScript library for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
+A lightweight, zero-dependency TypeScript library (and CLI) for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
+
+> **Static analysis only.** This library inspects the `manifest.json` you give it. Capabilities registered at runtime , `chrome.scripting`/`chrome.userScripts` content scripts, dynamic or session `declarativeNetRequest` rules, programmatically opened side panels , cannot be detected from the manifest. An absent capability means "not declared in the manifest," not "never used."
 
 ## What are Browser Extension Capabilities?
 
-Browser extension capabilities represent the **functional interfaces and execution environments** that an extension can utilize. These are the different ways an extension can interact with the browser, web pages, and users. Each capability corresponds to specific manifest fields and defines where and how the extension's code can run.
+Browser extension capabilities represent the **functional interfaces, execution environments, and access grants** that an extension declares. These are the different ways an extension can interact with the browser, web pages, and users. Each capability corresponds to specific manifest fields.
 
 For example:
 
-- **Background Capability**: Allows the extension to run persistent code in the background
+- **Background Capability**: Allows the extension to run code in the background
 - **Content Scripts Capability**: Enables the extension to interact with web page content
 - **Popup Capability**: Provides a user interface through browser toolbar buttons
-- **Options Capability**: Offers configuration pages for user settings
+- **Permissions** (opt-in): API permissions and host access the extension requests
 
 ## Features
 
-- **Comprehensive Detection**: Detects all major browser extension capabilities and interfaces
-- **User-Friendly Output**: Returns descriptive capability objects with explanations
-- **Cross-Browser Support**: Works with Chrome, Firefox, Edge, and other Chromium-based browsers
+- **Comprehensive Detection**: Detects all major UI surfaces, execution contexts, and overrides
+- **Permission & host analysis**: Opt-in surfacing of `permissions`, `host_permissions`, and their optional variants
+- **Cross-browser compatibility metadata**: Per-capability Chrome/Edge/Firefox/Safari support (opt-in)
+- **MV2 and MV3 aware**: Understands both manifest versions in a single pass
+- **Library + CLI**: Use it programmatically or from the terminal
 
 ## Installation
 
 ```bash
 npm install browser-extension-capabilities
 ```
+
+## CLI
+
+```bash
+# Analyze a manifest (defaults to ./manifest.json)
+npx browser-extension-capabilities ./my-extension/manifest.json
+
+# Everything: fields, normalized ids, compatibility, and permissions
+npx browser-extension-capabilities ./manifest.json --all
+
+# Machine-readable output
+npx browser-extension-capabilities ./manifest.json --json
+```
+
+| Flag            | Description                                                             |
+| --------------- | --------------------------------------------------------------------- |
+| `--fields`      | Include the manifest field paths that triggered each capability        |
+| `--names`       | Include normalized, manifest-aligned ids                               |
+| `--compat`      | Include cross-browser compatibility metadata                           |
+| `--permissions` | Include permissions and host access as capabilities                    |
+| `--all`         | Shorthand for `--fields --names --compat --permissions`                |
+| `--json`        | Output JSON instead of a human-readable list                           |
+| `--no-strict`   | Print the fallback capability instead of erroring on bad input         |
+| `-h`, `--help`  | Show help                                                              |
 
 ## Usage
 
@@ -41,19 +69,21 @@ import {
   getExtensionCapabilities,
   getExtensionCapabilitiesAsync,
   analyzeExtensionManifest,
+  analyzeExtension,
 } from 'browser-extension-capabilities'
 
-// 1) Sync (path)
+// 1) Sync (path) , throws on missing file / invalid JSON by default
 const caps1 = getExtensionCapabilities('./path/to/extension/manifest.json', {
   includeFields: true,
   normalizeNames: true,
   includeCompatibility: true,
+  includePermissions: true,
 })
 
-// 2) Async (path)
+// 2) Async (path) , opt out of throwing with strict: false
 const caps2 = await getExtensionCapabilitiesAsync(
   './path/to/extension/manifest.json',
-  { strict: true },
+  { strict: false },
 )
 
 // 3) Direct object
@@ -61,74 +91,66 @@ import * as fs from 'fs'
 const manifest = JSON.parse(fs.readFileSync('./path/to/manifest.json', 'utf8'))
 const caps3 = analyzeExtensionManifest(manifest, { normalizeNames: true })
 
-console.log(caps1)
-// [
-//   { capability: 'background', id: 'background', description: 'Background service worker or page for persistent functionality', fields: ['background.service_worker'] },
-//   { capability: 'content_scripts', id: 'content_scripts', description: 'Content scripts that run on web pages to interact with page content', fields: ['content_scripts'] },
-//   { capability: 'popup', id: 'action_popup', description: 'Toolbar popup UI', fields: ['action.default_popup'] },
-// ]
+// 4) Direct object + metadata
+const analysis = analyzeExtension(manifest)
+// { manifestVersion: 3, name: 'My Extension', capabilities: [ ... ] }
 ```
 
 ## Supported Capabilities
 
 | Capability                   | Description                                                         | Manifest Fields                                                                     |
 | ---------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **background**               | Background service worker or page for persistent functionality      | `background.page`, `background.scripts`, `background.service_worker`                |
-| **content_scripts**          | Content scripts that run on web pages to interact with page content | `content_scripts`                                                                   |
+| **background**               | Background service worker or page                                   | `background.page`, `background.scripts`, `background.service_worker`                |
+| **content_scripts**          | Content scripts that run on web pages                               | `content_scripts`                                                                   |
+| **user_scripts**             | Registration/execution of arbitrary user scripts                   | `user_scripts`                                                                       |
 | **popup**                    | Toolbar popup UI                                                    | `action.default_popup`, `browser_action.default_popup`, `page_action.default_popup` |
-| **sidebar**                  | Side panel UI                                                       | `side_panel.default_path`, `sidebar_action.default_panel`                           |
-| **devtools**                 | Developer tools panel                                               | `devtools_page`                                                                     |
-| **options**                  | Options page for user configuration                                 | `options_ui.page`, `options_page`                                                   |
-| **newtab**                   | New tab page override                                               | `chrome_url_overrides.newtab`                                                       |
-| **bookmarks**                | Custom bookmarks page replacement                                   | `chrome_url_overrides.bookmarks`                                                    |
-| **history**                  | History page override                                               | `chrome_url_overrides.history`                                                      |
-| **sandbox**                  | Sandboxed pages for isolated execution                              | `sandbox.pages`                                                                     |
-| **web_resources**            | Web-accessible resources exposed to web pages                       | `web_accessible_resources`                                                          |
-| **omnibox**                  | Omnibox keyword integration                                         | `omnibox.keyword`                                                                   |
-| **commands**                 | Keyboard shortcuts and command actions                              | `commands`                                                                          |
-| **settings_homepage**        | Browser settings override: homepage                                 | `chrome_settings_overrides.homepage`                                                |
-| **settings_search_provider** | Browser settings override: search provider                          | `chrome_settings_overrides.search_provider`                                         |
-| **settings_startup_pages**   | Browser settings override: startup pages                            | `chrome_settings_overrides.startup_pages`                                           |
-| **declarative_net_request**  | Declarative network request rules                                   | `declarative_net_request.rule_resources`                                            |
-| **tts_engine**               | Text-to-speech engine                                               | `tts_engine.voices`                                                                 |
+| **side_panel**               | Side panel UI (Chromium)                                            | `side_panel.default_path`                                                            |
+| **sidebar_action**           | Sidebar UI (Firefox)                                               | `sidebar_action.default_panel`                                                       |
+| **devtools**                 | Developer tools panel                                              | `devtools_page`                                                                     |
+| **options**                  | Options page for user configuration                                | `options_ui.page`, `options_page`                                                   |
+| **newtab**                   | New tab page override                                              | `chrome_url_overrides.newtab`                                                       |
+| **bookmarks**                | Custom bookmarks page replacement                                  | `chrome_url_overrides.bookmarks`                                                    |
+| **history**                  | History page override                                             | `chrome_url_overrides.history`                                                      |
+| **sandbox**                  | Sandboxed pages for isolated execution                            | `sandbox.pages`                                                                     |
+| **web_resources**            | Web-accessible resources exposed to web pages                     | `web_accessible_resources`                                                          |
+| **omnibox**                  | Omnibox keyword integration                                       | `omnibox.keyword`                                                                   |
+| **commands**                 | Keyboard shortcuts and command actions                            | `commands`                                                                          |
+| **settings_homepage**        | Browser settings override: homepage                               | `chrome_settings_overrides.homepage`                                                |
+| **settings_search_provider** | Browser settings override: search provider                        | `chrome_settings_overrides.search_provider`                                         |
+| **settings_startup_pages**   | Browser settings override: startup pages                          | `chrome_settings_overrides.startup_pages`                                           |
+| **declarative_net_request**  | Declarative network request rules                                 | `declarative_net_request.rule_resources`                                            |
+| **tts_engine**               | Text-to-speech engine                                             | `tts_engine.voices`                                                                 |
+| **externally_connectable**   | Messaging endpoint for web pages / other extensions               | `externally_connectable.matches`, `externally_connectable.ids`                      |
+| **content_security_policy**  | Custom Content Security Policy                                     | `content_security_policy`                                                           |
+| **incognito**                | Declared incognito (private browsing) behavior                    | `incognito`                                                                         |
+| **managed_storage**          | Managed storage schema for enterprise policy                      | `storage.managed_schema`                                                            |
+
+### Permissions (opt-in)
+
+With `includePermissions: true` (or `--permissions`), the analyzer also emits a capability per requested permission and one for host access:
+
+- Each entry in `permissions` / `optional_permissions` (optional ones carry `optional: true`)
+- `host_permissions` / `optional_host_permissions`, with the match patterns in `fields`
+
+Well-known API permissions (`nativeMessaging`, `webRequest`, `scripting`, `cookies`, `debugger`, …) get a human-readable description; unknown ones fall back to `API permission: <name>`.
 
 ## API Reference
 
-### `getExtensionCapabilities(manifestPath: string, options?: GetCapabilitiesOptions): ExtensionCapability[]`
+### `getExtensionCapabilities(manifestPath, options?): ExtensionCapability[]`
 
-Analyzes a browser extension manifest from a file path and returns an array of capability objects.
+Reads a manifest from disk (synchronous) and returns its capabilities.
 
-#### Parameters
+### `getExtensionCapabilitiesAsync(manifestPath, options?): Promise<ExtensionCapability[]>`
 
-- `manifestPath` (string): Direct path to the extension's `manifest.json` file
-- `options` (optional): See Options below
+Async variant. Same options and error semantics.
 
-#### Returns
-
-- `ExtensionCapability[]`: Array of capability objects with `capability`, `description`, and optionally `id` and `fields` when enabled via options
-
-#### Example
-
-```typescript
-import { getExtensionCapabilities } from 'browser-extension-capabilities'
-
-const capabilities = getExtensionCapabilities('./my-extension/manifest.json', {
-  includeFields: true,
-  normalizeNames: true,
-})
-
-capabilities.forEach(({ capability, id, description, fields }) => {
-  console.log(`${id ?? capability}: ${description}`, fields ?? [])
-})
-```
-
-### `getExtensionCapabilitiesAsync(manifestPath: string, options?: GetCapabilitiesOptions): Promise<ExtensionCapability[]>`
-
-Async variant of the path-based API. Respects the same options and error handling semantics.
-
-### `analyzeExtensionManifest(manifest: ExtensionManifest, options?: GetCapabilitiesOptions): ExtensionCapability[]`
+### `analyzeExtensionManifest(manifest, options?): ExtensionCapability[]`
 
 Analyzes a manifest object directly without reading from disk.
+
+### `analyzeExtension(manifest, options?): ExtensionAnalysis`
+
+Like `analyzeExtensionManifest`, but returns `{ manifestVersion, name, capabilities }`.
 
 ### Types
 
@@ -138,57 +160,78 @@ interface ExtensionCapability {
   description: string
   id?: string // normalized manifest-aligned name (e.g., "web_accessible_resources")
   fields?: string[] // manifest fields that triggered this capability
+  optional?: boolean // true for optional_permissions / optional_host_permissions
   compatibility?: {
+    chrome?: boolean
+    edge?: boolean
+    firefox?: boolean
     safari?: boolean
     notes?: string
     docs?: string
   }
 }
 
+interface ExtensionAnalysis {
+  manifestVersion?: number
+  name?: string
+  capabilities: ExtensionCapability[]
+}
+
 interface GetCapabilitiesOptions {
-  strict?: boolean // throw on missing/invalid manifest when true
+  strict?: boolean // default true: throw on missing/invalid manifest; set false to return the fallback
   includeFields?: boolean // include manifest field paths in each capability
   normalizeNames?: boolean // include normalized id aligned with manifest naming
-  includeCompatibility?: boolean // include Safari-focused compatibility metadata per capability
+  includeCompatibility?: boolean // include cross-browser compatibility metadata per capability
+  includePermissions?: boolean // surface permissions and host access as capabilities
 }
 ```
 
-### Compatibility metadata (Safari-focused)
+### Compatibility metadata
 
-When `includeCompatibility: true` is set, each capability may include a `compatibility` object with conservative Safari support and notes.
+When `includeCompatibility: true` is set, each capability may include a `compatibility` object describing per-browser support.
 
-Example output snippet:
+The data is **generated from [browser-extension-compat-data](https://github.com/cezaraugusto/browser-extension-compat-data)** (which sources MDN's [browser-compat-data](https://github.com/mdn/browser-compat-data)) and committed as a snapshot in `src/generated/compat.ts`. Regenerate it with `pnpm data:build-compat`. Two rules are applied on top of the raw data:
+
+- **Edge mirrors Chrome.** MDN's WebExtensions data under-tracks Edge (most entries read `false` even for features Edge ships), so Edge is derived from Chrome , Edge is Chromium-based.
+- **`sandbox` and `tts_engine`** are not in MDN's manifest data, so they use a best-effort override (flagged in `notes`).
 
 ```json
 {
-  "capability": "sidebar",
-  "description": "Side panel UI",
-  "id": "sidebar",
+  "capability": "externally_connectable",
+  "description": "Messaging endpoint for web pages and other extensions",
+  "id": "externally_connectable",
   "compatibility": {
-    "safari": false,
-    "notes": "Chromium uses side_panel; Firefox uses sidebar_action. Safari does not provide an equivalent sidebar UI API.",
-    "docs": "https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/user_interface"
+    "chrome": true,
+    "edge": true,
+    "firefox": false,
+    "safari": true,
+    "notes": "Partial support in Safari.",
+    "docs": "https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/externally_connectable"
   }
 }
 ```
 
 ## Error Handling
 
-The library gracefully handles various error scenarios:
+By default the library **throws** so problems are never silently swallowed:
 
-- **Missing manifest file**: Returns `[{ capability: "manifest", description: "Basic extension manifest configuration" }]` (or throws when `strict: true`)
-- **Invalid JSON**: Returns fallback capability with error logging (or throws when `strict: true`)
-- **Malformed manifest**: Attempts to extract available capabilities and falls back gracefully
+- **Missing manifest file**: throws `Error` (or returns the `manifest` fallback when `strict: false`)
+- **Invalid JSON**: throws `SyntaxError` (or returns the fallback when `strict: false`)
+- **Non-object manifest** (`null`, array, primitive): throws `TypeError` (or returns the fallback when `strict: false`)
+
+A valid manifest that declares no recognized capabilities returns a single `manifest` capability , that is a result, not an error. The library never writes to `console`.
 
 ## Use Cases
 
-- **Extension Analysis Tools**: Analyze extension capabilities and permissions
-- **Marketplace Validation**: Verify extension capabilities for store listings
+- **Extension Analysis Tools**: Analyze capabilities, permissions, and host access
+- **Marketplace Validation**: Verify declared capabilities for store listings
 - **Development Tools**: IDE plugins and development utilities
-- **Security Analysis**: Understand extension execution environments
+- **Security Analysis**: Surface permissions, host access, and messaging surfaces (enable `includePermissions`)
 - **Documentation Generation**: Auto-generate extension documentation
 
 ## Browser Support
+
+The analyzer itself is browser-agnostic (it parses JSON). The table below reflects where the *runtime* of this package is exercised; per-capability browser support is available via `includeCompatibility`.
 
 | <img src="https://media.extension.land/logos/browsers/chrome.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/edge.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/firefox.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/opera.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/safari.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/chromium.svg" width="70"> |
 | :-----------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------: |
@@ -201,6 +244,12 @@ The library gracefully handles various error scenarios:
 * [extension-from-store](https://github.com/cezaraugusto/extension-from-store)
 * [chrome-extension-manifest-json-schema](https://github.com/cezaraugusto/chrome-extension-manifest-json-schema)
 * [parse5-asset-patcher](https://github.com/cezaraugusto/parse5-asset-patcher)
+
+## Migrating from v2
+
+- **Errors throw by default.** v2 swallowed missing-file / invalid-JSON errors and logged to `console`. v3 throws; pass `strict: false` to restore fallback-style behavior. The library no longer logs.
+- **`sidebar` split into `side_panel` and `sidebar_action`.** The old merged `sidebar` capability is gone; detect the Chromium and Firefox surfaces independently.
+- **`compatibility` is now multi-browser and data-sourced.** It exposes `chrome`/`edge`/`firefox`/`safari` (instead of a single `safari` boolean), generated from `browser-extension-compat-data` / MDN rather than hand-maintained.
 
 ## License
 

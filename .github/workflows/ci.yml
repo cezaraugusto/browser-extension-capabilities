@@ -31,5 +31,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Lint
+        run: pnpm lint
+
+      - name: Verify generated compat is up to date
+        # Skips cleanly when browser-extension-compat-data is not checked out
+        # alongside this repo; fails if the committed snapshot has drifted.
+        run: pnpm verify:compat
+
+      - name: Build
+        run: pnpm build
+
       - name: Run tests
         run: pnpm test

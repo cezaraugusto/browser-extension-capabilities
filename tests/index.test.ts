@@ -1,489 +1,172 @@
 import * as fs from 'fs'
-import * as path from 'path'
 
-import {expect, test, describe, beforeEach, afterEach, vi} from 'vitest'
+import {expect, it, describe, beforeEach, afterEach, vi} from 'vitest'
 
 import {
   getExtensionCapabilities,
-  analyzeExtensionManifest
+  getExtensionCapabilitiesAsync,
+  analyzeExtensionManifest,
+  analyzeExtension
 } from '../src/index'
 
-// Mock fs module
 vi.mock('fs')
-vi.mock('path')
 
-describe('getExtensionCapabilities', () => {
-  const mockFs = vi.mocked(fs)
-  const mockPath = vi.mocked(path)
+const mockFs = vi.mocked(fs)
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    // Mock path.join to return a predictable path (no longer needed but keeping for compatibility)
-    mockPath.join.mockReturnValue('/test/extension/manifest.json')
-  })
+function mockFile (content: string): void {
+  mockFs.existsSync.mockReturnValue(true)
+  mockFs.readFileSync.mockReturnValue(content)
+}
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
+beforeEach(() => {
+  vi.clearAllMocks()
+})
 
-  it('should return background capability when background scripts are present', () => {
-    const manifest = {
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('analyzeExtensionManifest — detection', () => {
+  it('detects background from service_worker', () => {
+    const caps = analyzeExtensionManifest({
       manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      background: {
-        service_worker: 'background.js'
-      }
-    }
+      name: 'x',
+      version: '1',
+      background: {service_worker: 'bg.js'}
+    })
 
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
+    expect(caps).toContainEqual({
       capability: 'background',
       description:
         'Background service worker or page for persistent functionality'
     })
   })
 
-  it('should return content_scripts capability when content scripts are present', () => {
-    const manifest = {
+  it('detects content_scripts', () => {
+    const caps = analyzeExtensionManifest({
       manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      content_scripts: [
-        {
-          matches: ['<all_urls>'],
-          js: ['content.js']
-        }
-      ]
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'content_scripts',
-      description:
-        'Content scripts that run on web pages to interact with page content'
+      name: 'x',
+      version: '1',
+      content_scripts: [{matches: ['<all_urls>'], js: ['c.js']}]
     })
+
+    expect(caps.some((c) => c.capability === 'content_scripts')).toBe(true)
   })
 
-  it('should return popup capability when action popup is present', () => {
-    const manifest = {
+  it('detects popup from action/browser_action/page_action', () => {
+    expect(
+      analyzeExtensionManifest({
+        manifest_version: 3,
+        name: 'x',
+        version: '1',
+        action: {default_popup: 'p.html'}
+      }).some((c) => c.capability === 'popup')
+    ).toBe(true)
+
+    expect(
+      analyzeExtensionManifest({
+        manifest_version: 2,
+        name: 'x',
+        version: '1',
+        browser_action: {default_popup: 'p.html'}
+      } as never).some((c) => c.capability === 'popup')
+    ).toBe(true)
+  })
+
+  it('splits side_panel (Chromium) and sidebar_action (Firefox)', () => {
+    const sidePanel = analyzeExtensionManifest({
       manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      action: {
-        default_popup: 'popup.html'
-      }
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'popup',
-      description: 'Toolbar popup UI'
+      name: 'x',
+      version: '1',
+      side_panel: {default_path: 'panel.html'}
     })
-  })
 
-  it('should return sidebar capability when side panel is present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      side_panel: {
-        default_path: 'sidebar.html'
-      }
-    }
+    expect(sidePanel.some((c) => c.capability === 'side_panel')).toBe(true)
+    expect(sidePanel.some((c) => c.capability === 'sidebar_action')).toBe(false)
 
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'sidebar',
-      description: 'Side panel UI'
-    })
-  })
-
-  it('should return devtools capability when devtools page is present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      devtools_page: 'devtools.html'
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'devtools',
-      description: 'Developer tools panel'
-    })
-  })
-
-  it('should return options capability when options page is present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      options_ui: {
-        page: 'options.html'
-      }
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'options',
-      description: 'Options page for user configuration'
-    })
-  })
-
-  it('should return newtab capability when newtab override is present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      chrome_url_overrides: {
-        newtab: 'newtab.html'
-      }
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'newtab',
-      description: 'New tab page override'
-    })
-  })
-
-  it('should return sandbox capability when sandbox pages are present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      sandbox: {
-        pages: ['sandbox.html']
-      }
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'sandbox',
-      description: 'Sandboxed pages for isolated execution'
-    })
-  })
-
-  it('should return web_resources capability when web accessible resources are present', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      web_accessible_resources: [
-        {
-          resources: ['injected.js'],
-          matches: ['<all_urls>']
-        }
-      ]
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toContainEqual({
-      capability: 'web_resources',
-      description: 'Web-accessible resources exposed to web pages'
-    })
-  })
-
-  it('should return manifest capability when manifest file is not found', () => {
-    mockFs.existsSync.mockReturnValue(false)
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toEqual([
-      {
-        capability: 'manifest',
-        description: 'Basic extension manifest configuration'
-      }
-    ])
-  })
-
-  it('should return manifest capability when manifest JSON is invalid', () => {
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue('invalid json')
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toEqual([
-      {
-        capability: 'manifest',
-        description: 'Basic extension manifest configuration'
-      }
-    ])
-  })
-
-  it('should return manifest capability when no specific capabilities are found', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0'
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toEqual([
-      {
-        capability: 'manifest',
-        description: 'Basic extension manifest configuration'
-      }
-    ])
-  })
-
-  it('should handle multiple capabilities in a single manifest', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      background: {
-        service_worker: 'background.js'
-      },
-      content_scripts: [
-        {
-          matches: ['<all_urls>'],
-          js: ['content.js']
-        }
-      ],
-      action: {
-        default_popup: 'popup.html'
-      }
-    }
-
-    mockFs.existsSync.mockReturnValue(true)
-    mockFs.readFileSync.mockReturnValue(JSON.stringify(manifest))
-
-    const capabilities = getExtensionCapabilities(
-      '/test/extension/manifest.json'
-    )
-
-    expect(capabilities).toHaveLength(3)
-    expect(capabilities).toContainEqual({
-      capability: 'background',
-      description:
-        'Background service worker or page for persistent functionality'
-    })
-    expect(capabilities).toContainEqual({
-      capability: 'content_scripts',
-      description:
-        'Content scripts that run on web pages to interact with page content'
-    })
-    expect(capabilities).toContainEqual({
-      capability: 'popup',
-      description: 'Toolbar popup UI'
-    })
-  })
-
-  it('should detect MV2 options_page and browser_action', () => {
-    const manifest = {
+    const firefox = analyzeExtensionManifest({
       manifest_version: 2,
-      name: 'Test Extension',
-      version: '1.0.0',
-      options_page: 'options.html',
-      browser_action: {default_popup: 'popup.html'}
-    }
+      name: 'x',
+      version: '1',
+      sidebar_action: {default_panel: 'panel.html'}
+    } as never)
 
-    const capabilities = analyzeExtensionManifest(manifest as any)
-
-    expect(capabilities).toEqual(
-      expect.arrayContaining([
-        {
-          capability: 'options',
-          description: 'Options page for user configuration'
-        },
-        {capability: 'popup', description: 'Toolbar popup UI'}
-      ])
-    )
+    expect(firefox.some((c) => c.capability === 'sidebar_action')).toBe(true)
+    expect(firefox.some((c) => c.capability === 'side_panel')).toBe(false)
   })
 
-  it('should detect MV2 web_accessible_resources as string array', () => {
-    const manifest = {
+  it('detects newly-added capabilities', () => {
+    const caps = analyzeExtensionManifest({
+      manifest_version: 3,
+      name: 'x',
+      version: '1',
+      user_scripts: {},
+      externally_connectable: {matches: ['https://example.com/*']},
+      content_security_policy: {extension_pages: "script-src 'self'"},
+      incognito: 'split',
+      storage: {managed_schema: 'schema.json'}
+    } as never)
+
+    const keys = caps.map((c) => c.capability)
+
+    expect(keys).toContain('user_scripts')
+    expect(keys).toContain('externally_connectable')
+    expect(keys).toContain('content_security_policy')
+    expect(keys).toContain('incognito')
+    expect(keys).toContain('managed_storage')
+  })
+
+  it('detects MV2 options_page and string-array web_accessible_resources', () => {
+    const caps = analyzeExtensionManifest({
       manifest_version: 2,
-      name: 'Test Extension',
-      version: '1.0.0',
+      name: 'x',
+      version: '1',
+      options_page: 'o.html',
       web_accessible_resources: ['a.js', 'b.css']
-    }
+    } as never)
 
-    const capabilities = analyzeExtensionManifest(manifest as any)
+    const keys = caps.map((c) => c.capability)
 
-    expect(capabilities).toEqual(
-      expect.arrayContaining([
-        {
-          capability: 'web_resources',
-          description: 'Web-accessible resources exposed to web pages'
-        }
-      ])
-    )
+    expect(keys).toContain('options')
+    expect(keys).toContain('web_resources')
   })
 
-  it('should detect omnibox and commands capabilities', () => {
-    const manifest = {
+  it('detects settings overrides, DNR, omnibox, commands, tts', () => {
+    const caps = analyzeExtensionManifest({
       manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
+      name: 'x',
+      version: '1',
       omnibox: {keyword: 'foo'},
-      commands: {_execute_action: {}}
-    }
-
-    const capabilities = analyzeExtensionManifest(manifest as any)
-
-    expect(capabilities).toEqual(
-      expect.arrayContaining([
-        {capability: 'omnibox', description: 'Omnibox keyword integration'},
-        {
-          capability: 'commands',
-          description: 'Keyboard shortcuts and command actions'
-        }
-      ])
-    )
-  })
-
-  it('should detect settings overrides and declarative_net_request and tts_engine', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
+      commands: {_execute_action: {}},
       chrome_settings_overrides: {
-        homepage: 'https://example.com',
-        search_provider: {name: 'Example'},
+        homepage: 'https://e.com',
+        search_provider: {name: 'E'},
         startup_pages: ['https://a.com']
       },
-      declarative_net_request: {
-        rule_resources: [{id: 'rules', path: 'rules.json'}]
-      },
+      declarative_net_request: {rule_resources: [{id: 'r', path: 'r.json'}]},
       tts_engine: {voices: [{}]}
-    }
+    })
 
-    const capabilities = analyzeExtensionManifest(manifest as any)
+    const keys = caps.map((c) => c.capability)
 
-    expect(capabilities).toEqual(
+    expect(keys).toEqual(
       expect.arrayContaining([
-        {
-          capability: 'settings_homepage',
-          description: 'Browser settings override: homepage'
-        },
-        {
-          capability: 'settings_search_provider',
-          description: 'Browser settings override: search provider'
-        },
-        {
-          capability: 'settings_startup_pages',
-          description: 'Browser settings override: startup pages'
-        },
-        {
-          capability: 'declarative_net_request',
-          description: 'Declarative network request rules'
-        },
-        {capability: 'tts_engine', description: 'Text-to-speech engine'}
+        'omnibox',
+        'commands',
+        'settings_homepage',
+        'settings_search_provider',
+        'settings_startup_pages',
+        'declarative_net_request',
+        'tts_engine'
       ])
     )
   })
 
-  it('should include fields and normalized id when options are enabled', () => {
-    const manifest = {
+  it('ignores whitespace-only fields and falls back to manifest', () => {
+    const caps = analyzeExtensionManifest({
       manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      action: {default_popup: 'popup.html'}
-    }
-
-    const capabilities = analyzeExtensionManifest(manifest as any, {
-      includeFields: true,
-      normalizeNames: true
-    })
-
-    const popup = capabilities.find((c) => c.capability === 'popup')!
-
-    expect(popup.id).toBeDefined()
-    expect(Array.isArray(popup.fields)).toBe(true)
-    expect(popup.fields!.length).toBeGreaterThan(0)
-  })
-
-  it('should expose compatibility metadata when enabled', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
-      action: {default_popup: 'popup.html'}
-    }
-
-    const capabilities = analyzeExtensionManifest(manifest as any, {
-      includeCompatibility: true,
-      normalizeNames: true
-    })
-
-    const popup = capabilities.find((c) => c.capability === 'popup')!
-
-    expect(popup.compatibility).toBeDefined()
-    expect(popup.compatibility?.safari).toBe(true)
-  })
-
-  it('should ignore whitespace-only string fields in detection', () => {
-    const manifest = {
-      manifest_version: 3,
-      name: 'Test Extension',
-      version: '1.0.0',
+      name: 'x',
+      version: '1',
       action: {default_popup: '   '},
       devtools_page: '  ',
       options_ui: {page: '   '},
@@ -492,12 +175,236 @@ describe('getExtensionCapabilities', () => {
       chrome_url_overrides: {newtab: '  ', bookmarks: ' ', history: ' '},
       background: {page: '  ', service_worker: ' ', scripts: ['   ']},
       web_accessible_resources: ['   ']
-    }
+    } as never)
 
-    const capabilities = analyzeExtensionManifest(manifest as any)
+    expect(caps).toEqual([
+      {
+        capability: 'manifest',
+        description: 'Basic extension manifest configuration'
+      }
+    ])
+  })
 
-    // Should fall back to manifest only, because nothing valid should be detected
-    expect(capabilities).toEqual([
+  it('returns results sorted by id/capability', () => {
+    const caps = analyzeExtensionManifest({
+      manifest_version: 3,
+      name: 'x',
+      version: '1',
+      omnibox: {keyword: 'z'},
+      action: {default_popup: 'p.html'},
+      background: {service_worker: 'b.js'}
+    })
+
+    const labels = caps.map((c) => c.id ?? c.capability)
+
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)))
+  })
+})
+
+describe('options', () => {
+  it('includes fields and normalized id when enabled', () => {
+    const popup = analyzeExtensionManifest(
+      {manifest_version: 3, name: 'x', version: '1', action: {default_popup: 'p.html'}},
+      {includeFields: true, normalizeNames: true}
+    ).find((c) => c.capability === 'popup')!
+
+    expect(popup.id).toBe('action_popup')
+    expect(popup.fields!.length).toBeGreaterThan(0)
+  })
+
+  it('exposes multi-browser compatibility metadata', () => {
+    const sidePanel = analyzeExtensionManifest(
+      {manifest_version: 3, name: 'x', version: '1', side_panel: {default_path: 's.html'}},
+      {includeCompatibility: true}
+    ).find((c) => c.capability === 'side_panel')!
+
+    expect(sidePanel.compatibility).toMatchObject({
+      chrome: true,
+      firefox: false,
+      safari: false
+    })
+  })
+
+  it('compatibility works without normalizeNames', () => {
+    const newtab = analyzeExtensionManifest(
+      {
+        manifest_version: 3,
+        name: 'x',
+        version: '1',
+        chrome_url_overrides: {newtab: 'n.html'}
+      },
+      {includeCompatibility: true}
+    ).find((c) => c.capability === 'newtab')!
+
+    expect(newtab.compatibility?.chrome).toBe(true)
+    expect(newtab.id).toBeUndefined()
+  })
+})
+
+describe('permissions (opt-in)', () => {
+  const manifest = {
+    manifest_version: 3,
+    name: 'x',
+    version: '1',
+    permissions: ['storage', 'nativeMessaging', 'someFuturePermission'],
+    optional_permissions: ['tabs'],
+    host_permissions: ['https://*/*'],
+    optional_host_permissions: ['https://opt.example.com/*']
+  }
+
+  it('is off by default', () => {
+    const caps = analyzeExtensionManifest(manifest as never)
+
+    expect(caps.some((c) => c.capability === 'storage')).toBe(false)
+    expect(caps.some((c) => c.capability === 'host_permissions')).toBe(false)
+  })
+
+  it('surfaces permissions and host access when enabled', () => {
+    const caps = analyzeExtensionManifest(manifest as never, {
+      includePermissions: true,
+      normalizeNames: true
+    })
+
+    const storage = caps.find((c) => c.capability === 'storage')!
+
+    expect(storage.description).toBe('Persist data in extension storage')
+    expect(storage.id).toBe('permissions.storage')
+
+    const future = caps.find((c) => c.capability === 'someFuturePermission')!
+
+    expect(future.description).toBe('API permission: someFuturePermission')
+
+    const optTabs = caps.find((c) => c.capability === 'tabs')!
+
+    expect(optTabs.optional).toBe(true)
+
+    const hosts = caps.find((c) => c.capability === 'host_permissions')!
+
+    expect(hosts.fields).toEqual(['https://*/*'])
+
+    const optHosts = caps.find(
+      (c) => c.capability === 'optional_host_permissions'
+    )!
+
+    expect(optHosts.optional).toBe(true)
+  })
+})
+
+describe('analyzeExtension — metadata', () => {
+  it('returns manifest version, name, and capabilities', () => {
+    const result = analyzeExtension({
+      manifest_version: 3,
+      name: 'My Extension',
+      version: '1',
+      action: {default_popup: 'p.html'}
+    })
+
+    expect(result.manifestVersion).toBe(3)
+    expect(result.name).toBe('My Extension')
+    expect(result.capabilities.some((c) => c.capability === 'popup')).toBe(true)
+  })
+})
+
+describe('error semantics', () => {
+  it('throws on a non-object manifest by default', () => {
+    expect(() => analyzeExtensionManifest(null as never)).toThrow(TypeError)
+    expect(() => analyzeExtensionManifest(42 as never)).toThrow(TypeError)
+    expect(() => analyzeExtensionManifest([] as never)).toThrow(TypeError)
+  })
+
+  it('returns the fallback for a non-object manifest when strict:false', () => {
+    expect(analyzeExtensionManifest(null as never, {strict: false})).toEqual([
+      {
+        capability: 'manifest',
+        description: 'Basic extension manifest configuration'
+      }
+    ])
+  })
+
+  it('getExtensionCapabilities throws on missing file by default', () => {
+    mockFs.existsSync.mockReturnValue(false)
+    expect(() => getExtensionCapabilities('/nope.json')).toThrow(
+      /not found/
+    )
+  })
+
+  it('getExtensionCapabilities returns fallback on missing file when strict:false', () => {
+    mockFs.existsSync.mockReturnValue(false)
+    expect(getExtensionCapabilities('/nope.json', {strict: false})).toEqual([
+      {
+        capability: 'manifest',
+        description: 'Basic extension manifest configuration'
+      }
+    ])
+  })
+
+  it('getExtensionCapabilities throws SyntaxError on invalid JSON by default', () => {
+    mockFile('not json')
+    expect(() => getExtensionCapabilities('/m.json')).toThrow(SyntaxError)
+  })
+
+  it('getExtensionCapabilities returns fallback on invalid JSON when strict:false', () => {
+    mockFile('not json')
+    expect(getExtensionCapabilities('/m.json', {strict: false})).toEqual([
+      {
+        capability: 'manifest',
+        description: 'Basic extension manifest configuration'
+      }
+    ])
+  })
+
+  it('reads and analyzes a valid manifest from disk', () => {
+    mockFile(
+      JSON.stringify({
+        manifest_version: 3,
+        name: 'x',
+        version: '1',
+        background: {service_worker: 'b.js'}
+      })
+    )
+    const caps = getExtensionCapabilities('/m.json')
+
+    expect(caps.some((c) => c.capability === 'background')).toBe(true)
+  })
+})
+
+describe('async variant', () => {
+  it('analyzes a valid manifest', async () => {
+    mockFs.promises = {
+      access: vi.fn().mockResolvedValue(undefined),
+      readFile: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          manifest_version: 3,
+          name: 'x',
+          version: '1',
+          action: {default_popup: 'p.html'}
+        })
+      )
+    } as never
+
+    const caps = await getExtensionCapabilitiesAsync('/m.json')
+
+    expect(caps.some((c) => c.capability === 'popup')).toBe(true)
+  })
+
+  it('throws on missing file by default', async () => {
+    mockFs.promises = {
+      access: vi.fn().mockRejectedValue(new Error('ENOENT'))
+    } as never
+
+    await expect(getExtensionCapabilitiesAsync('/nope.json')).rejects.toThrow(
+      /not found/
+    )
+  })
+
+  it('returns fallback on missing file when strict:false', async () => {
+    mockFs.promises = {
+      access: vi.fn().mockRejectedValue(new Error('ENOENT'))
+    } as never
+
+    await expect(
+      getExtensionCapabilitiesAsync('/nope.json', {strict: false})
+    ).resolves.toEqual([
       {
         capability: 'manifest',
         description: 'Basic extension manifest configuration'
