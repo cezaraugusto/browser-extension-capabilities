@@ -11,7 +11,8 @@
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
     "allowImportingTsExtensions": true,
-    "types": ["node"]
+    "types": ["node"],
+    "rootDir": "./src"
   },
   "include": ["src"]
 }
