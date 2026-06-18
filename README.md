@@ -194,6 +194,14 @@ The library gracefully handles various error scenarios:
 | :-----------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------: |
 |                                              Chrome<br>✅                                               |                                             Edge<br>✅                                              |                                               Firefox<br>✅                                               |                                              Opera<br>✅                                              |                                              Safari<br>✅                                               |                                               Chromium<br>✅                                                |
 
+## Related projects
+
+* [browser-extension-manifest-fields](https://github.com/cezaraugusto/browser-extension-manifest-fields)
+* [browser-extension-compat-data](https://github.com/cezaraugusto/browser-extension-compat-data)
+* [extension-from-store](https://github.com/cezaraugusto/extension-from-store)
+* [chrome-extension-manifest-json-schema](https://github.com/cezaraugusto/chrome-extension-manifest-json-schema)
+* [parse5-asset-patcher](https://github.com/cezaraugusto/parse5-asset-patcher)
+
 ## License
 
 MIT (c) Cezar Augusto.
