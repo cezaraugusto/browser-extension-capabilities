@@ -26,7 +26,7 @@ describe('getExtensionCapabilities', () => {
     vi.restoreAllMocks()
   })
 
-  test('should return background capability when background scripts are present', () => {
+  it('should return background capability when background scripts are present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -50,7 +50,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return content_scripts capability when content scripts are present', () => {
+  it('should return content_scripts capability when content scripts are present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -77,7 +77,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return popup capability when action popup is present', () => {
+  it('should return popup capability when action popup is present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -100,7 +100,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return sidebar capability when side panel is present', () => {
+  it('should return sidebar capability when side panel is present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -123,7 +123,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return devtools capability when devtools page is present', () => {
+  it('should return devtools capability when devtools page is present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -144,7 +144,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return options capability when options page is present', () => {
+  it('should return options capability when options page is present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -167,7 +167,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return newtab capability when newtab override is present', () => {
+  it('should return newtab capability when newtab override is present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -190,7 +190,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return sandbox capability when sandbox pages are present', () => {
+  it('should return sandbox capability when sandbox pages are present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -213,7 +213,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return web_resources capability when web accessible resources are present', () => {
+  it('should return web_resources capability when web accessible resources are present', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -239,7 +239,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should return manifest capability when manifest file is not found', () => {
+  it('should return manifest capability when manifest file is not found', () => {
     mockFs.existsSync.mockReturnValue(false)
 
     const capabilities = getExtensionCapabilities(
@@ -254,7 +254,7 @@ describe('getExtensionCapabilities', () => {
     ])
   })
 
-  test('should return manifest capability when manifest JSON is invalid', () => {
+  it('should return manifest capability when manifest JSON is invalid', () => {
     mockFs.existsSync.mockReturnValue(true)
     mockFs.readFileSync.mockReturnValue('invalid json')
 
@@ -270,7 +270,7 @@ describe('getExtensionCapabilities', () => {
     ])
   })
 
-  test('should return manifest capability when no specific capabilities are found', () => {
+  it('should return manifest capability when no specific capabilities are found', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -292,7 +292,7 @@ describe('getExtensionCapabilities', () => {
     ])
   })
 
-  test('should handle multiple capabilities in a single manifest', () => {
+  it('should handle multiple capabilities in a single manifest', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -335,7 +335,7 @@ describe('getExtensionCapabilities', () => {
     })
   })
 
-  test('should detect MV2 options_page and browser_action', () => {
+  it('should detect MV2 options_page and browser_action', () => {
     const manifest = {
       manifest_version: 2,
       name: 'Test Extension',
@@ -357,7 +357,7 @@ describe('getExtensionCapabilities', () => {
     )
   })
 
-  test('should detect MV2 web_accessible_resources as string array', () => {
+  it('should detect MV2 web_accessible_resources as string array', () => {
     const manifest = {
       manifest_version: 2,
       name: 'Test Extension',
@@ -377,7 +377,7 @@ describe('getExtensionCapabilities', () => {
     )
   })
 
-  test('should detect omnibox and commands capabilities', () => {
+  it('should detect omnibox and commands capabilities', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -399,7 +399,7 @@ describe('getExtensionCapabilities', () => {
     )
   })
 
-  test('should detect settings overrides and declarative_net_request and tts_engine', () => {
+  it('should detect settings overrides and declarative_net_request and tts_engine', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -440,7 +440,7 @@ describe('getExtensionCapabilities', () => {
     )
   })
 
-  test('should include fields and normalized id when options are enabled', () => {
+  it('should include fields and normalized id when options are enabled', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -460,7 +460,7 @@ describe('getExtensionCapabilities', () => {
     expect(popup.fields!.length).toBeGreaterThan(0)
   })
 
-  test('should expose compatibility metadata when enabled', () => {
+  it('should expose compatibility metadata when enabled', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
@@ -479,7 +479,7 @@ describe('getExtensionCapabilities', () => {
     expect(popup.compatibility?.safari).toBe(true)
   })
 
-  test('should ignore whitespace-only string fields in detection', () => {
+  it('should ignore whitespace-only string fields in detection', () => {
     const manifest = {
       manifest_version: 3,
       name: 'Test Extension',
