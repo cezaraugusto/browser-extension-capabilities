@@ -178,26 +178,33 @@ export const DETECTORS: Detector[] = [
     id: 'chrome_settings_overrides.startup_pages',
     description: 'Browser settings override: startup pages',
     fields: ['chrome_settings_overrides.startup_pages'],
-    detect: (m) =>
-      Array.isArray(m.chrome_settings_overrides?.startup_pages) &&
-      m.chrome_settings_overrides!.startup_pages!.length > 0
+    detect: (m) => {
+      const pages = m.chrome_settings_overrides?.startup_pages
+
+      return Array.isArray(pages) && pages.length > 0
+    }
   },
   {
     capability: 'declarative_net_request',
     id: 'declarative_net_request',
     description: 'Declarative network request rules',
     fields: ['declarative_net_request.rule_resources'],
-    detect: (m) =>
-      Array.isArray(m.declarative_net_request?.rule_resources) &&
-      m.declarative_net_request!.rule_resources!.length > 0
+    detect: (m) => {
+      const rules = m.declarative_net_request?.rule_resources
+
+      return Array.isArray(rules) && rules.length > 0
+    }
   },
   {
     capability: 'tts_engine',
     id: 'tts_engine',
     description: 'Text-to-speech engine',
     fields: ['tts_engine.voices'],
-    detect: (m) =>
-      Array.isArray(m.tts_engine?.voices) && m.tts_engine!.voices!.length > 0
+    detect: (m) => {
+      const voices = m.tts_engine?.voices
+
+      return Array.isArray(voices) && voices.length > 0
+    }
   },
   {
     capability: 'externally_connectable',

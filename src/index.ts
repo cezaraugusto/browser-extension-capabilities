@@ -18,30 +18,100 @@ export type {
   GetCapabilitiesOptions
 } from './types'
 
-function makeEntry (
-  capability: string,
-  description: string,
-  opts: GetCapabilitiesOptions,
-  fields?: string[],
-  normalizedId?: string,
-  compatKey?: string,
+interface CapabilityDescriptor {
+  capability: string
+  description: string
+  fields?: string[]
+  normalizedId?: string
+  compatKey?: string
   optional?: boolean
+}
+
+interface PermissionContext {
+  map: Map<string, ExtensionCapability>
+  opts: GetCapabilitiesOptions
+}
+
+function entryCompat (
+  desc: CapabilityDescriptor,
+  opts: GetCapabilitiesOptions
+) {
+  if (!opts.includeCompatibility) return undefined
+
+  return CAP_COMPAT[desc.compatKey ?? desc.normalizedId ?? desc.capability]
+}
+
+function makeEntry (
+  desc: CapabilityDescriptor,
+  opts: GetCapabilitiesOptions
 ): ExtensionCapability {
-  const entry: ExtensionCapability = {capability, description}
+  const entry: ExtensionCapability = {
+    capability: desc.capability,
+    description: desc.description
+  }
 
-  if (opts.includeFields && fields?.length) entry.fields = fields
+  if (opts.includeFields && desc.fields?.length) entry.fields = desc.fields
 
-  if (opts.normalizeNames && normalizedId) entry.id = normalizedId
+  if (opts.normalizeNames && desc.normalizedId) entry.id = desc.normalizedId
+
+  if (desc.optional) entry.optional = true
+
+  const compat = entryCompat(desc, opts)
+
+  if (compat) entry.compatibility = compat
+
+  return entry
+}
+
+function addPermissions (
+  ctx: PermissionContext,
+  list: unknown,
+  prefix: string
+) {
+  if (!Array.isArray(list)) return
+
+  const optional = prefix.startsWith('optional')
+
+  for (const name of list) {
+    if (!isNonEmptyString(name)) continue
+
+    const key = `${prefix}:${name}`
+
+    if (ctx.map.has(key)) continue
+
+    ctx.map.set(
+      key,
+      makeEntry(
+        {
+          capability: name,
+          description: PERMISSION_DESCRIPTIONS[name] ?? `API permission: ${name}`,
+          normalizedId: `${prefix}.${name}`,
+          compatKey: name,
+          optional
+        },
+        ctx.opts
+      )
+    )
+  }
+}
+
+function addHosts (ctx: PermissionContext, list: unknown, id: string) {
+  if (!hasNonEmptyStringArray(list)) return
+
+  const optional = id.startsWith('optional')
+  const entry: ExtensionCapability = {
+    capability: id,
+    description: optional
+      ? 'Optional host access to web origins'
+      : 'Host access to web origins',
+    fields: list.filter(isNonEmptyString)
+  }
+
+  if (ctx.opts.normalizeNames) entry.id = id
 
   if (optional) entry.optional = true
 
-  if (opts.includeCompatibility) {
-    const compat = CAP_COMPAT[compatKey ?? normalizedId ?? capability]
-
-    if (compat) entry.compatibility = compat
-  }
-
-  return entry
+  ctx.map.set(id, entry)
 }
 
 function collectPermissions (
@@ -49,54 +119,12 @@ function collectPermissions (
   manifest: ExtensionManifest,
   opts: GetCapabilitiesOptions
 ): void {
-  const addList = (list: unknown, optional: boolean, prefix: string): void => {
-    if (!Array.isArray(list)) return
+  const ctx: PermissionContext = {map, opts}
 
-    for (const name of list) {
-      if (!isNonEmptyString(name)) continue
-
-      const key = `${prefix}:${name}`
-
-      if (map.has(key)) continue
-
-      map.set(
-        key,
-        makeEntry(
-          name,
-          PERMISSION_DESCRIPTIONS[name] ?? `API permission: ${name}`,
-          opts,
-          undefined,
-          `${prefix}.${name}`,
-          name,
-          optional
-        )
-      )
-    }
-  }
-
-  addList(manifest.permissions, false, 'permissions')
-  addList(manifest.optional_permissions, true, 'optional_permissions')
-
-  const addHosts = (list: unknown, optional: boolean, id: string): void => {
-    if (!hasNonEmptyStringArray(list)) return
-
-    const entry: ExtensionCapability = {
-      capability: id,
-      description: optional
-        ? 'Optional host access to web origins'
-        : 'Host access to web origins',
-      fields: (list as string[]).filter(isNonEmptyString)
-    }
-
-    if (opts.normalizeNames) entry.id = id
-
-    if (optional) entry.optional = true
-
-    map.set(id, entry)
-  }
-
-  addHosts(manifest.host_permissions, false, 'host_permissions')
-  addHosts(manifest.optional_host_permissions, true, 'optional_host_permissions')
+  addPermissions(ctx, manifest.permissions, 'permissions')
+  addPermissions(ctx, manifest.optional_permissions, 'optional_permissions')
+  addHosts(ctx, manifest.host_permissions, 'host_permissions')
+  addHosts(ctx, manifest.optional_host_permissions, 'optional_host_permissions')
 }
 
 function manifestFallback (
@@ -144,7 +172,16 @@ export function analyzeExtensionManifest (
     if (d.detect(manifest)) {
       capabilityMap.set(
         d.id,
-        makeEntry(d.capability, d.description, opts, d.fields, d.id, d.id)
+        makeEntry(
+          {
+            capability: d.capability,
+            description: d.description,
+            fields: d.fields,
+            normalizedId: d.id,
+            compatKey: d.id
+          },
+          opts
+        )
       )
     }
   }

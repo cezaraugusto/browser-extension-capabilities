@@ -32,52 +32,42 @@ interface ParsedArgs {
   help: boolean
 }
 
+// Each flag mutates the accumulating result; unknown flags throw, and the
+// first non-flag argument is treated as the manifest path.
+const FLAGS: Record<string, (r: ParsedArgs) => void> = {
+  '-h': (r) => (r.help = true),
+  '--help': (r) => (r.help = true),
+  '--json': (r) => (r.json = true),
+  '--fields': (r) => (r.options.includeFields = true),
+  '--names': (r) => (r.options.normalizeNames = true),
+  '--compat': (r) => (r.options.includeCompatibility = true),
+  '--permissions': (r) => (r.options.includePermissions = true),
+  '--no-strict': (r) => (r.options.strict = false),
+  '--all': (r) => {
+    r.options.includeFields = true
+    r.options.normalizeNames = true
+    r.options.includeCompatibility = true
+    r.options.includePermissions = true
+  }
+}
+
 function parseArgs (argv: string[]): ParsedArgs {
-  const options: GetCapabilitiesOptions = {}
-  let path = './manifest.json'
-  let json = false
-  let help = false
-
-  for (const arg of argv) {
-    switch (arg) {
-      case '-h':
-      case '--help':
-        help = true
-        break
-      case '--fields':
-        options.includeFields = true
-        break
-      case '--names':
-        options.normalizeNames = true
-        break
-      case '--compat':
-        options.includeCompatibility = true
-        break
-      case '--permissions':
-        options.includePermissions = true
-        break
-      case '--all':
-        options.includeFields = true
-        options.normalizeNames = true
-        options.includeCompatibility = true
-        options.includePermissions = true
-        break
-      case '--json':
-        json = true
-        break
-      case '--no-strict':
-        options.strict = false
-        break
-      default:
-        if (arg.startsWith('-')) {
-          throw new Error(`Unknown option: ${arg}`)
-        }
-
-        path = arg
-    }
+  const result: ParsedArgs = {
+    path: './manifest.json',
+    options: {},
+    json: false,
+    help: false
   }
 
-  return {path, options, json, help}
+  for (const arg of argv) {
+    const handler = FLAGS[arg]
+
+    if (handler) handler(result)
+    else if (arg.startsWith('-')) throw new Error(`Unknown option: ${arg}`)
+    else result.path = arg
+  }
+
+  return result
 }
 
 function formatBrowsers (compat: ExtensionCapability['compatibility']): string {
