@@ -34,10 +34,10 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # The compat-data source is a separate repo. While it is not yet published
-      # to GitHub these two steps no-op (checkout is non-fatal, build is gated on
-      # its success) and the verify step skips. Once the repo exists, the clone
-      # succeeds and the drift check becomes a hard gate automatically.
+      # The compat-data source is a separate private repo, cloned with a
+      # read-only deploy key (secret COMPAT_DATA_DEPLOY_KEY). The checkout is
+      # non-fatal and the build is gated on its success, so a transient source
+      # outage skips the drift check rather than failing the whole run.
       - name: Check out compat-data source
         id: compat_src
         continue-on-error: true
@@ -45,6 +45,7 @@ jobs:
         with:
           repository: cezaraugusto/browser-extension-compat-data
           path: compat-data-src
+          ssh-key: ${{ secrets.COMPAT_DATA_DEPLOY_KEY }}
 
       - name: Build compat-data source
         if: steps.compat_src.outcome == 'success'
