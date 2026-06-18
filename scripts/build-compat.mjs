@@ -14,7 +14,6 @@
 //      from Chrome — Edge is Chromium-based. This matches how MDN displays it.
 //   2. Keys MDN does not track (sandbox, tts_engine) fall back to OVERRIDES.
 
-import {createRequire} from 'node:module'
 import {fileURLToPath} from 'node:url'
 import {dirname, resolve} from 'node:path'
 import {writeFileSync, readFileSync, existsSync} from 'node:fs'
@@ -35,7 +34,8 @@ let getSupport
 let getMdnUrl
 let hasFeature
 
-const require = createRequire(import.meta.url)
+// package.json sits one level above the built dist, wherever the source lives.
+const pkgPath = resolve(dirname(distPath), '../package.json')
 const OUT = resolve(here, '../src/generated/compat.ts')
 
 // capability id -> manifest key(s). A browser supports the capability if it
@@ -182,7 +182,7 @@ function render () {
     Object.entries(result).sort(([a], [b]) => a.localeCompare(b))
   )
 
-  const pkg = require('../../browser-extension-compat-data/package.json')
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
 
   const header = `/* eslint-disable @stylistic/max-len */
 // AUTO-GENERATED — do not edit by hand.
