@@ -9,13 +9,13 @@
 
 # browser-extension-capabilities [![Version][npm-version-image]][npm-version-url] [![Downloads][npm-downloads-image]][npm-downloads-url] [![workflow][action-image]][action-url]
 
-A lightweight, zero-dependency TypeScript library (and CLI) for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
+A zero-dependency TypeScript library and CLI for analyzing browser extension manifests and extracting their capabilities.
 
 > **Static analysis only.** This library inspects the `manifest.json` you give it. Capabilities registered at runtime (`chrome.scripting`/`chrome.userScripts` content scripts, dynamic or session `declarativeNetRequest` rules, programmatically opened side panels) cannot be detected from the manifest. An absent capability means "not declared in the manifest," not "never used."
 
 ## Features
 
-- **Comprehensive Detection**: Detects all major UI surfaces, execution contexts, and overrides
+- **Detection**: UI surfaces, execution contexts, and overrides
 - **Permission & host analysis**: Opt-in surfacing of `permissions`, `host_permissions`, and their optional variants
 - **Cross-browser compatibility metadata**: Per-capability Chrome/Edge/Firefox/Safari support (opt-in)
 - **MV2 and MV3 aware**: Understands both manifest versions in a single pass
@@ -216,7 +216,7 @@ The analyzer itself is browser-agnostic (it parses JSON). The table below reflec
 
 | <img src="https://media.extension.land/logos/browsers/chrome.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/edge.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/firefox.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/opera.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/safari.svg" width="70"> | <img src="https://media.extension.land/logos/browsers/chromium.svg" width="70"> |
 | :-----------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------: |
-|                                              Chrome<br>✅                                               |                                             Edge<br>✅                                              |                                               Firefox<br>✅                                               |                                              Opera<br>✅                                              |                                              Safari<br>✅                                               |                                               Chromium<br>✅                                                |
+|                                              Chrome<br>Yes                                               |                                             Edge<br>Yes                                              |                                               Firefox<br>Yes                                               |                                              Opera<br>Yes                                              |                                              Safari<br>Yes                                               |                                               Chromium<br>Yes                                                |
 
 ## Related projects
 
