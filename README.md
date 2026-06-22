@@ -11,18 +11,7 @@
 
 A lightweight, zero-dependency TypeScript library (and CLI) for analyzing browser extension manifests and extracting their capabilities. Useful for extension development tools, analysis tools, and browser extension marketplaces.
 
-> **Static analysis only.** This library inspects the `manifest.json` you give it. Capabilities registered at runtime , `chrome.scripting`/`chrome.userScripts` content scripts, dynamic or session `declarativeNetRequest` rules, programmatically opened side panels , cannot be detected from the manifest. An absent capability means "not declared in the manifest," not "never used."
-
-## What are Browser Extension Capabilities?
-
-Browser extension capabilities represent the **functional interfaces, execution environments, and access grants** that an extension declares. These are the different ways an extension can interact with the browser, web pages, and users. Each capability corresponds to specific manifest fields.
-
-For example:
-
-- **Background Capability**: Allows the extension to run code in the background
-- **Content Scripts Capability**: Enables the extension to interact with web page content
-- **Popup Capability**: Provides a user interface through browser toolbar buttons
-- **Permissions** (opt-in): API permissions and host access the extension requests
+> **Static analysis only.** This library inspects the `manifest.json` you give it. Capabilities registered at runtime (`chrome.scripting`/`chrome.userScripts` content scripts, dynamic or session `declarativeNetRequest` rules, programmatically opened side panels) cannot be detected from the manifest. An absent capability means "not declared in the manifest," not "never used."
 
 ## Features
 
@@ -72,7 +61,7 @@ import {
   analyzeExtension,
 } from 'browser-extension-capabilities'
 
-// 1) Sync (path) , throws on missing file / invalid JSON by default
+// 1) Sync (path): throws on missing file / invalid JSON by default
 const caps1 = getExtensionCapabilities('./path/to/extension/manifest.json', {
   includeFields: true,
   normalizeNames: true,
@@ -80,7 +69,7 @@ const caps1 = getExtensionCapabilities('./path/to/extension/manifest.json', {
   includePermissions: true,
 })
 
-// 2) Async (path) , opt out of throwing with strict: false
+// 2) Async (path): opt out of throwing with strict: false
 const caps2 = await getExtensionCapabilitiesAsync(
   './path/to/extension/manifest.json',
   { strict: false },
@@ -192,7 +181,7 @@ When `includeCompatibility: true` is set, each capability may include a `compati
 
 The data is **generated from [browser-extension-compat-data](https://github.com/cezaraugusto/browser-extension-compat-data)** (which sources MDN's [browser-compat-data](https://github.com/mdn/browser-compat-data)) and committed as a snapshot in `src/generated/compat.ts`. Regenerate it with `pnpm data:build-compat`. Two rules are applied on top of the raw data:
 
-- **Edge mirrors Chrome.** MDN's WebExtensions data under-tracks Edge (most entries read `false` even for features Edge ships), so Edge is derived from Chrome , Edge is Chromium-based.
+- **Edge mirrors Chrome.** MDN's WebExtensions data under-tracks Edge (most entries read `false` even for features Edge ships), so Edge is derived from Chrome (Edge is Chromium-based).
 - **`sandbox` and `tts_engine`** are not in MDN's manifest data, so they use a best-effort override (flagged in `notes`).
 
 ```json
@@ -219,15 +208,7 @@ By default the library **throws** so problems are never silently swallowed:
 - **Invalid JSON**: throws `SyntaxError` (or returns the fallback when `strict: false`)
 - **Non-object manifest** (`null`, array, primitive): throws `TypeError` (or returns the fallback when `strict: false`)
 
-A valid manifest that declares no recognized capabilities returns a single `manifest` capability , that is a result, not an error. The library never writes to `console`.
-
-## Use Cases
-
-- **Extension Analysis Tools**: Analyze capabilities, permissions, and host access
-- **Marketplace Validation**: Verify declared capabilities for store listings
-- **Development Tools**: IDE plugins and development utilities
-- **Security Analysis**: Surface permissions, host access, and messaging surfaces (enable `includePermissions`)
-- **Documentation Generation**: Auto-generate extension documentation
+A valid manifest that declares no recognized capabilities returns a single `manifest` capability; that is a result, not an error. The library never writes to `console`.
 
 ## Browser Support
 
