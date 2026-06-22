@@ -1,6 +1,6 @@
 /* eslint-disable @stylistic/max-len */
 // AUTO-GENERATED, do not edit by hand.
-// Source: browser-extension-compat-data@0.1.1 (MDN browser-compat-data).
+// Source: browser-extension-compat-data (MDN browser-compat-data).
 // Regenerate with: pnpm data:build-compat
 import type {CapabilityCompatibility} from '../types'
 

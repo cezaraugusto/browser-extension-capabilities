@@ -34,8 +34,6 @@ let getSupport
 let getMdnUrl
 let hasFeature
 
-// package.json sits one level above the built dist, wherever the source lives.
-const pkgPath = resolve(dirname(distPath), '../package.json')
 const OUT = resolve(here, '../src/generated/compat.ts')
 
 // capability id -> manifest key(s). A browser supports the capability if it
@@ -182,11 +180,9 @@ function render () {
     Object.entries(result).sort(([a], [b]) => a.localeCompare(b))
   )
 
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-
   const header = `/* eslint-disable @stylistic/max-len */
 // AUTO-GENERATED, do not edit by hand.
-// Source: browser-extension-compat-data@${pkg.version} (MDN browser-compat-data).
+// Source: browser-extension-compat-data (MDN browser-compat-data).
 // Regenerate with: pnpm data:build-compat
 import type {CapabilityCompatibility} from '../types'
 
