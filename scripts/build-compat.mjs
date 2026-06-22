@@ -11,7 +11,7 @@
 // Two documented rules applied on top of the raw data:
 //   1. Edge mirrors Chrome. MDN's WebExtensions BCD under-tracks Edge (most
 //      entries are `false` even for features Edge ships), so we derive Edge
-//      from Chrome — Edge is Chromium-based. This matches how MDN displays it.
+//      from Chrome (Edge is Chromium-based). This matches how MDN displays it.
 //   2. Keys MDN does not track (sandbox, tts_engine) fall back to OVERRIDES.
 
 import {fileURLToPath} from 'node:url'
@@ -185,7 +185,7 @@ function render () {
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
 
   const header = `/* eslint-disable @stylistic/max-len */
-// AUTO-GENERATED — do not edit by hand.
+// AUTO-GENERATED, do not edit by hand.
 // Source: browser-extension-compat-data@${pkg.version} (MDN browser-compat-data).
 // Regenerate with: pnpm data:build-compat
 import type {CapabilityCompatibility} from '../types'

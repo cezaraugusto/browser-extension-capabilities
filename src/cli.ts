@@ -92,7 +92,7 @@ function printList (capabilities: ExtensionCapability[]): void {
     const optional = cap.optional ? ' (optional)' : ''
 
     process.stdout.write(
-      `• ${label}${optional} — ${cap.description}${formatBrowsers(
+      `• ${label}${optional}: ${cap.description}${formatBrowsers(
         cap.compatibility
       )}\n`
     )

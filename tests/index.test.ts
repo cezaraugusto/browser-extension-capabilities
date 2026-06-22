@@ -26,7 +26,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('analyzeExtensionManifest — detection', () => {
+describe('analyzeExtensionManifest: detection', () => {
   it('detects background from service_worker', () => {
     const caps = analyzeExtensionManifest({
       manifest_version: 3,
@@ -290,7 +290,7 @@ describe('permissions (opt-in)', () => {
   })
 })
 
-describe('analyzeExtension — metadata', () => {
+describe('analyzeExtension: metadata', () => {
   it('returns manifest version, name, and capabilities', () => {
     const result = analyzeExtension({
       manifest_version: 3,

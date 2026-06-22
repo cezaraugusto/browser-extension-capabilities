@@ -117,7 +117,7 @@ export interface ExtensionManifest {
     managed_schema?: string
   }
 
-  // Permissions/context — surfaced only when includePermissions is enabled
+  // Permissions/context, surfaced only when includePermissions is enabled
   permissions?: string[]
   optional_permissions?: string[]
   host_permissions?: string[]
