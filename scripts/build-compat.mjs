@@ -2,11 +2,10 @@
 // (which sources MDN browser-compat-data). Run: pnpm data:build-compat
 //
 // Why a committed snapshot instead of a runtime dependency:
-//   - browser-extension-compat-data is not published to npm yet, so a hard
-//     dependency would make this package uninstallable.
 //   - Consumers of capability detection should not have to pull in the compat
 //     toolchain (and its acorn dependency) just to read a support table.
-// The data still comes from the canonical source and is regenerable anytime.
+// The data still comes from the canonical source (browser-extension-compat-data
+// on npm) and is regenerable anytime.
 //
 // Two documented rules applied on top of the raw data:
 //   1. Edge mirrors Chrome. MDN's WebExtensions BCD under-tracks Edge (most
@@ -34,8 +33,6 @@ let getSupport
 let getMdnUrl
 let hasFeature
 
-// package.json sits one level above the built dist, wherever the source lives.
-const pkgPath = resolve(dirname(distPath), '../package.json')
 const OUT = resolve(here, '../src/generated/compat.ts')
 
 // capability id -> manifest key(s). A browser supports the capability if it
@@ -182,11 +179,9 @@ function render () {
     Object.entries(result).sort(([a], [b]) => a.localeCompare(b))
   )
 
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-
   const header = `/* eslint-disable @stylistic/max-len */
 // AUTO-GENERATED, do not edit by hand.
-// Source: browser-extension-compat-data@${pkg.version} (MDN browser-compat-data).
+// Source: browser-extension-compat-data (MDN browser-compat-data).
 // Regenerate with: pnpm data:build-compat
 import type {CapabilityCompatibility} from '../types'
 
